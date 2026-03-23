@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const path = require('path');
 const adminRoutes = require('./routes/adminRoutes');
 
 // Load env vars
@@ -18,6 +19,9 @@ const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
+// Serve static files from 'uploads' folder
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Body parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -28,7 +32,19 @@ app.use(cors({
   credentials: true
 }));
 
-// Mount routers
+// Import routes (after middleware)
+const courseRoutes = require('./routes/courseRoutes');
+const lessonRoutes = require('./routes/lessonRoutes');
+const resourceRoutes = require('./routes/resourceRoutes');
+const enrollmentRoutes = require('./routes/enrollmentRoutes');
+const messageRoutes = require('./routes/messageRoutes');
+
+// Mount routes
+app.use('/api/courses', courseRoutes);
+app.use('/api/lessons', lessonRoutes);
+app.use('/api/resources', resourceRoutes);
+app.use('/api/enrollments', enrollmentRoutes);
+app.use('/api/messages', messageRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 
@@ -59,7 +75,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Handle 404 - This works in both Express 4 and 5
+// Handle 404
 app.use((req, res) => {
   res.status(404).json({ 
     success: false, 

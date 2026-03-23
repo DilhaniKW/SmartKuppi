@@ -1,16 +1,18 @@
+// src/pages/TutorDashboard.js
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Layout, Users, BookOpen, Calendar, 
-  Bell, Clock, BarChart3, 
-  Plus, ArrowUpRight, 
-  Video, MessageSquare, DollarSign, 
-  Settings, LogOut, Menu, X, FileText,
-  Search, Star, AlertCircle, ChevronDown,
-  Mail, Phone, Award, CheckCircle, XCircle,
-  GraduationCap
+  Layout, Users, BookOpen, Calendar, Bell, Clock, BarChart3,
+  Plus, ArrowUpRight, Video, MessageSquare, DollarSign, 
+  Settings, LogOut, Menu, X, FileText, Search, Star, AlertCircle,
+  ChevronDown, Mail, Phone, Award, CheckCircle, XCircle, GraduationCap,
+  FolderOpen, Inbox, Edit3
 } from 'lucide-react';
+
+import TutorCourses from './TutorCourses';
+import TutorCourseCreate from './TutorCourseCreate';
+import TutorMessages from './TutorMessages';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -18,18 +20,18 @@ const TutorDashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [profileDropdown, setProfileDropdown] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [activeView, setActiveView] = useState('dashboard');
   const [tutor, setTutor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tutorStatus, setTutorStatus] = useState('approved');
   const [stats, setStats] = useState({
     totalStudents: 0,
-    activeLessons: 0,
+    totalCourses: 0,
     totalResources: 0,
     rating: 0
   });
   const [upcomingLessons, setUpcomingLessons] = useState([]);
-  const [recentResources, setRecentResources] = useState([]);
-  const [studentFeedback, setStudentFeedback] = useState([]);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   
   const navigate = useNavigate();
 
@@ -44,17 +46,13 @@ const TutorDashboard = () => {
     
     try {
       const parsedUser = JSON.parse(userData);
-      
-      // Check if user is tutor
       if (parsedUser.role !== 'tutor') {
         navigate('/');
         return;
       }
-      
       setTutor(parsedUser);
       setTutorStatus(parsedUser.status);
       
-      // Only fetch dashboard data if tutor is approved
       if (parsedUser.status === 'approved') {
         fetchDashboardData(parsedUser.id, token);
       } else {
@@ -69,64 +67,42 @@ const TutorDashboard = () => {
   const fetchDashboardData = async (tutorId, token) => {
     setLoading(true);
     try {
-      const [statsRes, lessonsRes, resourcesRes, feedbackRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/tutors/${tutorId}/stats`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`${API_BASE_URL}/tutors/${tutorId}/upcoming-lessons`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`${API_BASE_URL}/tutors/${tutorId}/recent-resources`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`${API_BASE_URL}/tutors/${tutorId}/feedback`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
+      // Fetch tutor's courses
+      const coursesRes = await fetch(`${API_BASE_URL}/courses/tutor/courses`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const coursesData = await coursesRes.json();
+      if (coursesData.success) {
+        const courses = coursesData.data;
+        const totalStudents = courses.reduce((sum, c) => sum + (c.enrolledCount || 0), 0);
+        setStats({
+          totalStudents,
+          totalCourses: courses.length,
+          totalResources: 0, // will implement later
+          rating: 4.9 // placeholder
+        });
+      }
+
+      // Fetch unread messages
+      const inboxRes = await fetch(`${API_BASE_URL}/messages/inbox`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const inboxData = await inboxRes.json();
+      if (inboxData.success) {
+        const unread = inboxData.data.filter(m => !m.read).length;
+        setUnreadMessages(unread);
+      }
+
+      // For upcoming lessons, we'll keep mock for now (or could fetch from courses)
+      setUpcomingLessons([
+        { id: 1, title: 'Advanced JavaScript', course: 'JavaScript Mastery', date: '2024-03-25', time: '10:00 AM', students: 12, meetingLink: 'https://meet.google.com/xxx' },
+        { id: 2, title: 'React Hooks Deep Dive', course: 'React Masterclass', date: '2024-03-26', time: '02:00 PM', students: 8, meetingLink: 'https://zoom.us/j/123' }
       ]);
-
-      const statsData = await statsRes.json();
-      const lessonsData = await lessonsRes.json();
-      const resourcesData = await resourcesRes.json();
-      const feedbackData = await feedbackRes.json();
-
-      if (statsData.success) setStats(statsData.data);
-      if (lessonsData.success) setUpcomingLessons(lessonsData.data);
-      if (resourcesData.success) setRecentResources(resourcesData.data);
-      if (feedbackData.success) setStudentFeedback(feedbackData.data);
-
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      setMockData();
-    } finally {
       setLoading(false);
     }
-  };
-
-  const setMockData = () => {
-    setStats({
-      totalStudents: 156,
-      activeLessons: 8,
-      totalResources: 45,
-      rating: 4.8
-    });
-
-    setUpcomingLessons([
-      { id: 1, title: 'Advanced JavaScript', student: 'John Doe', date: '2024-01-20', time: '10:00 AM', students: 12, status: 'confirmed' },
-      { id: 2, title: 'React Hooks Workshop', student: 'Sarah Smith', date: '2024-01-21', time: '2:00 PM', students: 8, status: 'confirmed' },
-      { id: 3, title: 'Database Design', student: 'Mike Johnson', date: '2024-01-22', time: '11:00 AM', students: 15, status: 'pending' },
-    ]);
-
-    setRecentResources([
-      { id: 1, title: 'JavaScript Cheat Sheet.pdf', type: 'PDF', downloads: 45, uploaded: '2 days ago' },
-      { id: 2, title: 'React Component Patterns', type: 'Video', downloads: 32, uploaded: '3 days ago' },
-      { id: 3, title: 'Database Normalization Notes', type: 'PDF', downloads: 28, uploaded: '5 days ago' },
-    ]);
-
-    setStudentFeedback([
-      { id: 1, student: 'Amal Perera', rating: 5, comment: 'Great explanation! Very helpful.', date: 'Yesterday' },
-      { id: 2, student: 'Nimali Silva', rating: 4, comment: 'Good session, but could be more interactive.', date: '2 days ago' },
-      { id: 3, student: 'Kasun Fernando', rating: 5, comment: 'Best tutor I\'ve had!', date: '3 days ago' },
-    ]);
   };
 
   const handleLogout = () => {
@@ -147,7 +123,9 @@ const TutorDashboard = () => {
     return 'Evening';
   };
 
-  // If tutor status is pending
+  // ─────────────────────────────────────────────────────────────────────────
+  // Pending screen
+  // ─────────────────────────────────────────────────────────────────────────
   if (tutorStatus === 'pending') {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -179,7 +157,9 @@ const TutorDashboard = () => {
     );
   }
 
-  // If tutor status is suspended
+  // ─────────────────────────────────────────────────────────────────────────
+  // Suspended screen
+  // ─────────────────────────────────────────────────────────────────────────
   if (tutorStatus === 'suspended') {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -206,6 +186,9 @@ const TutorDashboard = () => {
     );
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Loading spinner
+  // ─────────────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -218,10 +201,113 @@ const TutorDashboard = () => {
   }
 
   const statCards = [
-    { title: 'Total Students', value: stats.totalStudents, change: '+12 this month', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { title: 'Active Lessons', value: stats.activeLessons, change: 'This week', icon: Video, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    { title: 'Total Students', value: stats.totalStudents, change: '+8 this month', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { title: 'Courses', value: stats.totalCourses, change: '+2 new', icon: FolderOpen, color: 'text-indigo-600', bg: 'bg-indigo-50' },
     { title: 'Resources', value: stats.totalResources, change: '+5 new', icon: FileText, color: 'text-emerald-600', bg: 'bg-emerald-50' },
     { title: 'Rating', value: stats.rating.toFixed(1), change: `⭐ ${stats.rating}/5`, icon: Star, color: 'text-amber-600', bg: 'bg-amber-50' },
+  ];
+
+  const DashboardView = () => (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-7xl mx-auto space-y-8">
+      {/* Welcome Header */}
+      <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl shadow-indigo-500/20">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <div className="flex items-center space-x-2 mb-2">
+              <span className="px-2 py-0.5 bg-white/20 rounded-full text-[10px] font-bold uppercase tracking-widest backdrop-blur-sm">Tutor Premium</span>
+              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">Live</span>
+            </div>
+            <h2 className="text-3xl font-bold tracking-tight">Good {getTimeOfDay()}, {tutor?.name?.split(' ')[0] || 'Tutor'}! 👋</h2>
+            <p className="text-indigo-100 mt-2 max-w-md font-medium opacity-90">
+              You have {upcomingLessons.length} lessons today. Your overall rating is {stats.rating.toFixed(1)}/5.0. Keep inspiring!
+            </p>
+          </div>
+          <button 
+            onClick={() => setActiveView('create-course')}
+            className="flex items-center space-x-2 px-6 py-3 bg-white text-indigo-600 rounded-xl font-bold hover:bg-indigo-50 transition-all shadow-lg shadow-indigo-500/20 group"
+          >
+            <Plus className="h-5 w-5 group-hover:rotate-90 transition-transform" />
+            <span>Create New Course</span>
+          </button>
+        </div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+        <div className="absolute bottom-0 right-10 opacity-10 pointer-events-none"><BookOpen className="w-64 h-64" /></div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {statCards.map((stat, i) => {
+          const Icon = stat.icon;
+          return (
+            <div key={i} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div className={`${stat.bg} ${stat.color} p-3 rounded-2xl`}><Icon className="h-6 w-6" /></div>
+                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">{stat.change}</span>
+              </div>
+              <p className="text-sm font-medium text-slate-500">{stat.title}</p>
+              <h3 className="text-2xl font-bold text-slate-900 mt-1">{stat.value}</h3>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Today's Lessons */}
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-slate-50 flex items-center justify-between">
+          <h3 className="font-bold text-slate-900">Today's Lessons</h3>
+          <button onClick={() => setActiveView('courses')} className="text-indigo-600 text-sm font-bold">View All Courses</button>
+        </div>
+        <div className="divide-y divide-slate-50">
+          {upcomingLessons.length > 0 ? upcomingLessons.map(lesson => (
+            <div key={lesson.id} className="p-6 flex items-center justify-between hover:bg-slate-50">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-600"><Video className="h-6 w-6" /></div>
+                <div>
+                  <h4 className="font-bold text-slate-900">{lesson.title}</h4>
+                  <p className="text-sm text-slate-500">Course: {lesson.course} • {lesson.students} enrolled</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-bold text-slate-900">{lesson.time}</p>
+                <a href={lesson.meetingLink} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block px-3 py-1 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700">Join</a>
+              </div>
+            </div>
+          )) : <div className="p-12 text-center"><p className="text-slate-500">No lessons scheduled for today</p></div>}
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div>
+        <h2 className="text-lg font-bold text-slate-900 mb-6">Quick Actions</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: 'Create Course', icon: Plus, color: 'text-blue-600', bg: 'bg-blue-50', action: () => setActiveView('create-course') },
+            { label: 'Messages', icon: MessageSquare, color: 'text-amber-600', bg: 'bg-amber-50', action: () => setActiveView('messages') },
+            { label: 'Analytics', icon: BarChart3, color: 'text-emerald-600', bg: 'bg-emerald-50', action: () => console.log('Analytics') },
+            { label: 'Settings', icon: Settings, color: 'text-slate-600', bg: 'bg-slate-50', action: () => console.log('Settings') },
+          ].map((action, i) => {
+            const Icon = action.icon;
+            return (
+              <button key={i} onClick={action.action} className="group p-6 bg-white border border-slate-100 rounded-3xl hover:border-brand-200 hover:shadow-lg hover:shadow-brand-500/5 transition-all text-center">
+                <div className={`${action.bg} ${action.color} w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform`}>
+                  <Icon className="h-6 w-6" />
+                </div>
+                <span className="text-sm font-bold text-slate-700 group-hover:text-brand-600 transition-colors">{action.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </motion.div>
+  );
+
+  const navLinks = [
+    { name: 'Dashboard', icon: Layout, view: 'dashboard', isActive: activeView === 'dashboard' },
+    { name: 'My Courses', icon: FolderOpen, view: 'courses', isActive: activeView === 'courses' },
+    { name: 'Create Course', icon: Plus, view: 'create-course', isActive: activeView === 'create-course' },
+    { name: 'Messages', icon: MessageSquare, view: 'messages', isActive: activeView === 'messages', badge: unreadMessages },
+    { name: 'Resources', icon: FileText, view: 'resources', isActive: false },
   ];
 
   return (
@@ -232,46 +318,40 @@ const TutorDashboard = () => {
           <div className="h-20 flex items-center px-6 border-b border-slate-800">
             <Link to="/tutor-dashboard" className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-brand-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-brand-500/20">
-                <GraduationCap className="h-6 w-6" />
+                <BookOpen className="h-6 w-6" />
               </div>
               <div className="flex flex-col">
                 <span className="font-bold text-xl text-white tracking-tight">Smart<span className="text-brand-400">Kuppi</span></span>
                 <span className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Tutor Portal</span>
               </div>
             </Link>
-            <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-slate-400 hover:text-white">
-              <X className="h-6 w-6" />
-            </button>
+            <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-slate-400 hover:text-white"><X className="h-6 w-6" /></button>
           </div>
 
           <nav className="flex-1 p-4 space-y-1">
             <p className="px-2 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tutor Menu</p>
-            <Link to="/tutor-dashboard" className="flex items-center space-x-3 px-4 py-3 bg-brand-500/10 text-brand-400 rounded-xl font-medium">
-              <Layout className="h-5 w-5" />
-              <span>Dashboard</span>
-            </Link>
-            <Link to="/tutor/lessons" className="flex items-center space-x-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition-colors">
-              <Video className="h-5 w-5" />
-              <span>My Lessons</span>
-            </Link>
-            <Link to="/tutor/students" className="flex items-center space-x-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition-colors">
-              <Users className="h-5 w-5" />
-              <span>My Students</span>
-            </Link>
-            <Link to="/tutor/resources" className="flex items-center space-x-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition-colors">
-              <FileText className="h-5 w-5" />
-              <span>Resources</span>
-            </Link>
-            <Link to="/tutor/earnings" className="flex items-center space-x-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition-colors">
-              <DollarSign className="h-5 w-5" />
-              <span>Earnings</span>
-            </Link>
+            {navLinks.map((link) => (
+              <button
+                key={link.name}
+                onClick={() => link.view && setActiveView(link.view)}
+                className={`flex items-center justify-between w-full px-4 py-3 rounded-xl transition-all text-left ${
+                  link.isActive ? 'bg-brand-500/10 text-brand-400 font-medium' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <link.icon className="h-5 w-5" />
+                  <span>{link.name}</span>
+                </div>
+                {link.badge > 0 && (
+                  <span className="px-2 py-0.5 text-[10px] font-bold bg-rose-500 text-white rounded-full">{link.badge}</span>
+                )}
+              </button>
+            ))}
           </nav>
 
           <div className="p-4 border-t border-slate-800">
             <button onClick={handleLogout} className="flex items-center space-x-3 px-4 py-3 w-full text-slate-400 hover:text-rose-400 hover:bg-rose-400/10 rounded-xl transition-all">
-              <LogOut className="h-5 w-5" />
-              <span>Sign Out</span>
+              <LogOut className="h-5 w-5" /><span>Sign Out</span>
             </button>
           </div>
         </div>
@@ -279,73 +359,35 @@ const TutorDashboard = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-30 flex-shrink-0">
+        <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-30">
           <div className="flex items-center space-x-4">
             <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="lg:hidden p-2 text-slate-600">
               {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
             <div className="hidden md:flex items-center bg-slate-100 rounded-xl px-4 py-2 w-64 lg:w-96">
               <Search className="h-4 w-4 text-slate-400 mr-2" />
-              <input type="text" placeholder="Search students, lessons..." className="bg-transparent border-none focus:ring-0 text-sm w-full" />
-              <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium text-slate-400 bg-white border border-slate-200 rounded-md">
-                ⌘K
-              </kbd>
+              <input type="text" placeholder="Search students, courses..." className="bg-transparent border-none focus:ring-0 text-sm w-full" />
             </div>
           </div>
-
           <div className="flex items-center space-x-4">
-            <button 
-              onClick={() => setNotificationsOpen(!notificationsOpen)}
-              className="p-2 text-slate-500 hover:bg-slate-100 rounded-xl relative transition-colors"
-            >
+            <button className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">
               <Bell className="h-5 w-5" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
             </button>
-            <div className="h-8 w-px bg-slate-200 mx-1"></div>
-            
+            <div className="h-8 w-px bg-slate-200"></div>
             <div className="relative">
-              <button 
-                onClick={() => setProfileDropdown(!profileDropdown)}
-                className="flex items-center space-x-3 p-1.5 hover:bg-slate-100 rounded-xl transition-colors"
-              >
-                <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold text-xs">
-                  {tutor ? getInitials(tutor.name) : 'T'}
-                </div>
+              <button onClick={() => setProfileDropdown(!profileDropdown)} className="flex items-center space-x-3 p-1.5 hover:bg-slate-100 rounded-xl transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold text-xs">{tutor ? getInitials(tutor.name) : 'T'}</div>
                 <span className="hidden md:block text-sm font-medium text-slate-700">{tutor?.name || 'Tutor'}</span>
                 <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${profileDropdown ? 'rotate-180' : ''}`} />
               </button>
-
               <AnimatePresence>
                 {profileDropdown && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50"
-                  >
-                    <div className="px-4 py-3 border-b border-slate-50">
-                      <p className="text-sm font-semibold text-slate-800">{tutor?.name || 'Tutor User'}</p>
-                      <p className="text-xs text-slate-500">{tutor?.email || 'tutor@example.com'}</p>
-                    </div>
-                    <div className="p-1">
-                      <button className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">
-                        <Users className="h-4 w-4" />
-                        <span>My Profile</span>
-                      </button>
-                      <button className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">
-                        <Settings className="h-4 w-4" />
-                        <span>Account Settings</span>
-                      </button>
-                    </div>
-                    <div className="p-1 border-t border-slate-50">
-                      <button 
-                        onClick={handleLogout}
-                        className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        <span>Sign Out</span>
-                      </button>
-                    </div>
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50">
+                    <div className="px-4 py-3 border-b border-slate-50"><p className="text-sm font-semibold text-slate-800">{tutor?.name}</p><p className="text-xs text-slate-500">{tutor?.email}</p></div>
+                    <div className="p-1"><button className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-xl"><Users className="h-4 w-4" /><span>My Profile</span></button>
+                    <button className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-xl"><Settings className="h-4 w-4" /><span>Account Settings</span></button></div>
+                    <div className="p-1 border-t border-slate-50"><button onClick={handleLogout} className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-xl"><LogOut className="h-4 w-4" /><span>Sign Out</span></button></div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -353,253 +395,21 @@ const TutorDashboard = () => {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto">
-          <div className="min-h-full flex flex-col">
-            <div className="flex-1 p-4 sm:p-8">
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="max-w-7xl mx-auto space-y-8"
-              >
-                {/* Header Section */}
-                <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl shadow-indigo-500/20">
-                  <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div>
-                      <div className="flex items-center space-x-2 mb-2">
-                        <span className="px-2 py-0.5 bg-white/20 rounded-full text-[10px] font-bold uppercase tracking-widest backdrop-blur-sm">
-                          Tutor Premium
-                        </span>
-                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">Live Status: Active</span>
-                      </div>
-                      <h2 className="text-3xl font-bold tracking-tight">Good {getTimeOfDay()}, {tutor?.name?.split(' ')[0] || 'Tutor'}! 👋</h2>
-                      <p className="text-indigo-100 mt-2 max-w-md font-medium opacity-90">
-                        You have {upcomingLessons.length} lessons scheduled for today. 
-                        Your average rating is {stats.rating.toFixed(1)}/5.0. Keep up the great work!
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <button className="flex items-center space-x-2 px-6 py-3 bg-white text-indigo-600 rounded-xl font-bold hover:bg-indigo-50 transition-all shadow-lg shadow-indigo-500/20 group">
-                        <Plus className="h-5 w-5 group-hover:rotate-90 transition-transform" />
-                        <span>Schedule Lesson</span>
-                      </button>
-                    </div>
-                  </div>
-                  <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-                  <div className="absolute bottom-0 right-10 opacity-10 pointer-events-none">
-                    <BookOpen className="w-64 h-64" />
-                  </div>
-                </div>
-
-                {/* Stats Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {statCards.map((stat, i) => {
-                    const Icon = stat.icon;
-                    return (
-                      <div key={i} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className={`${stat.bg} ${stat.color} p-3 rounded-2xl`}>
-                            <Icon className="h-6 w-6" />
-                          </div>
-                          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
-                            {stat.change}
-                          </span>
-                        </div>
-                        <p className="text-sm font-medium text-slate-500">{stat.title}</p>
-                        <h3 className="text-2xl font-bold text-slate-900 mt-1">{stat.value}</h3>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  {/* Upcoming Lessons */}
-                  <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="h-5 w-5 text-indigo-600" />
-                        <h3 className="font-bold text-slate-900">Upcoming Lessons</h3>
-                      </div>
-                      <button className="text-indigo-600 text-sm font-bold hover:underline">View Full Schedule</button>
-                    </div>
-                    <div className="divide-y divide-slate-50">
-                      {upcomingLessons.length > 0 ? (
-                        upcomingLessons.map((lesson) => (
-                          <div key={lesson.id} className="p-6 flex items-center justify-between hover:bg-slate-50 transition-colors group">
-                            <div className="flex items-center space-x-4">
-                              <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-xl group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-                                {lesson.student?.charAt(0) || 'S'}
-                              </div>
-                              <div>
-                                <div className="flex items-center space-x-2">
-                                  <h4 className="font-bold text-slate-900 text-lg">{lesson.title}</h4>
-                                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                                    lesson.status === 'confirmed' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
-                                  }`}>
-                                    {lesson.status}
-                                  </span>
-                                </div>
-                                <p className="text-sm text-slate-500 mt-0.5">
-                                  Student: <span className="font-medium text-slate-700">{lesson.student}</span> • {lesson.students} enrolled
-                                </p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm font-bold text-slate-900">{lesson.time}</p>
-                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{lesson.date}</p>
-                              <button className="mt-3 px-4 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/10">
-                                Join Session
-                              </button>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="p-12 text-center">
-                          <p className="text-slate-500">No upcoming lessons</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Student Feedback */}
-                  <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                    <div className="flex items-center space-x-2 mb-6">
-                      <Star className="h-5 w-5 text-amber-400 fill-current" />
-                      <h3 className="font-bold text-slate-900">Student Feedback</h3>
-                    </div>
-                    <div className="space-y-6">
-                      {studentFeedback.length > 0 ? (
-                        studentFeedback.map((feedback) => (
-                          <div key={feedback.id} className="space-y-2 group">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{feedback.student}</span>
-                              <div className="flex text-amber-400">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star key={i} className={`h-3 w-3 ${i < feedback.rating ? 'fill-current' : 'text-slate-200'}`} />
-                                ))}
-                              </div>
-                            </div>
-                            <div className="relative">
-                              <p className="text-sm text-slate-600 italic leading-relaxed pl-4 border-l-2 border-slate-100 group-hover:border-indigo-200 transition-colors">
-                                "{feedback.comment}"
-                              </p>
-                            </div>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest pt-1">{feedback.date}</p>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-slate-500 text-center py-4">No feedback yet</p>
-                      )}
-                    </div>
-                    <button className="w-full mt-6 py-3 bg-slate-50 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-100 transition-colors border border-slate-100">
-                      View All Feedback
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  {/* Recent Resources */}
-                  <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-                      <h3 className="font-bold text-slate-900">Recent Resources</h3>
-                      <button className="text-indigo-600 text-sm font-bold">View All</button>
-                    </div>
-                    <div className="divide-y divide-slate-50">
-                      {recentResources.length > 0 ? (
-                        recentResources.map((resource) => (
-                          <div key={resource.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                            <div className="flex items-center space-x-3">
-                              <div className="p-2 bg-slate-100 rounded-xl text-slate-600">
-                                <FileText className="h-4 w-4" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-bold text-slate-900">{resource.title}</p>
-                                <p className="text-[10px] text-slate-500">{resource.downloads} downloads • {resource.uploaded}</p>
-                              </div>
-                            </div>
-                            <button className="text-xs font-bold text-indigo-600">View</button>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="p-8 text-center">
-                          <p className="text-slate-500">No resources yet</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Quick Actions */}
-                  <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-slate-900 p-6 rounded-3xl text-white flex items-center justify-between group cursor-pointer">
-                      <div className="flex items-center space-x-4">
-                        <div className="p-3 bg-white/10 rounded-2xl text-indigo-400 group-hover:scale-110 transition-transform">
-                          <MessageSquare className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <h4 className="font-bold">Messages</h4>
-                          <p className="text-xs text-slate-400">3 unread messages</p>
-                        </div>
-                      </div>
-                      <ArrowUpRight className="h-5 w-5 text-slate-500" />
-                    </div>
-                    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between group cursor-pointer">
-                      <div className="flex items-center space-x-4">
-                        <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl group-hover:scale-110 transition-transform">
-                          <BarChart3 className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-slate-900">Analytics</h4>
-                          <p className="text-xs text-slate-500">View performance</p>
-                        </div>
-                      </div>
-                      <ArrowUpRight className="h-5 w-5 text-slate-300" />
-                    </div>
-                    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between group cursor-pointer">
-                      <div className="flex items-center space-x-4">
-                        <div className="p-3 bg-slate-50 text-slate-600 rounded-2xl group-hover:scale-110 transition-transform">
-                          <Settings className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-slate-900">Settings</h4>
-                          <p className="text-xs text-slate-500">Manage profile</p>
-                        </div>
-                      </div>
-                      <ArrowUpRight className="h-5 w-5 text-slate-300" />
-                    </div>
-                    <div className="bg-indigo-600 p-6 rounded-3xl text-white flex items-center justify-between group cursor-pointer">
-                      <div className="flex items-center space-x-4">
-                        <div className="p-3 bg-white/10 rounded-2xl text-white group-hover:scale-110 transition-transform">
-                          <Plus className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <h4 className="font-bold">New Resource</h4>
-                          <p className="text-xs text-indigo-100">Upload materials</p>
-                        </div>
-                      </div>
-                      <ArrowUpRight className="h-5 w-5 text-indigo-300" />
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-
-            {/* Footer */}
-            <footer className="bg-white border-t border-slate-100 py-6 px-8 mt-8 flex-shrink-0">
-              <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex items-center space-x-2">
-                  <BookOpen className="h-5 w-5 text-brand-500" />
-                  <span className="font-bold text-slate-900">Smart<span className="text-brand-500">Kuppi</span></span>
-                  <span className="text-xs text-slate-400 ml-2">© 2024 Tutor Portal v1.0.2</span>
-                </div>
-                <div className="flex items-center space-x-6 text-xs font-bold text-slate-400 uppercase tracking-widest">
-                  <button className="hover:text-brand-500 transition-colors cursor-pointer">Tutor Guide</button>
-                  <button className="hover:text-brand-500 transition-colors cursor-pointer">Support</button>
-                  <button className="hover:text-brand-500 transition-colors cursor-pointer">Privacy</button>
-                </div>
-              </div>
-            </footer>
-          </div>
+        <main className="flex-1 overflow-y-auto p-4 sm:p-8">
+          <AnimatePresence mode="wait">
+            {activeView === 'dashboard' && <DashboardView key="dashboard" />}
+            {activeView === 'courses' && <TutorCourses key="courses" onBack={() => setActiveView('dashboard')} />}
+            {activeView === 'create-course' && <TutorCourseCreate key="create-course" onBack={() => setActiveView('dashboard')} />}
+            {activeView === 'messages' && <TutorMessages key="messages" onBack={() => setActiveView('dashboard')} />}
+          </AnimatePresence>
         </main>
+
+        <footer className="bg-white border-t border-slate-100 py-6 px-8">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center space-x-2"><BookOpen className="h-5 w-5 text-brand-500" /><span className="font-bold text-slate-900">Smart<span className="text-brand-500">Kuppi</span></span><span className="text-xs text-slate-400 ml-2">© 2024 Tutor Portal v1.2</span></div>
+            <div className="flex items-center space-x-6 text-xs font-bold text-slate-400 uppercase tracking-widest"><button className="hover:text-brand-500">Tutor Guide</button><button className="hover:text-brand-500">Support</button><button className="hover:text-brand-500">Privacy</button></div>
+          </div>
+        </footer>
       </div>
     </div>
   );
