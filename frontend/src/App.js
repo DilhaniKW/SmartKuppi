@@ -1,6 +1,6 @@
 // src/App.js
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -14,10 +14,10 @@ import TutorCourseCreate from './pages/TutorCourseCreate';
 import TutorCourseDetail from './pages/TutorCourseDetail';
 import TutorMessages from './pages/TutorMessages';
 import StudentCourseDetail from './pages/StudentCourseDetail';
-
-// 👇 Add these imports
 import TutorLessonCreate from './pages/TutorLessonCreate';
 import TutorResourceUpload from './pages/TutorResourceUpload';
+import BrowseCourses from './pages/BrowseCourses';
+import DiscussionForum from './pages/DiscussionForum';
 
 function App() {
   return (
@@ -37,14 +37,14 @@ function App() {
         <Route path="/tutor/create-course" element={<TutorCourseCreate />} />
         <Route path="/tutor/courses/:courseId" element={<TutorCourseDetail />} />
         <Route path="/tutor/messages" element={<TutorMessages />} />
-
-        {/* 👇 Add these two new routes */}
         <Route path="/tutor/create-lesson" element={<TutorLessonCreate />} />
         <Route path="/tutor/upload-resource" element={<TutorResourceUpload />} />
 
         {/* Student Routes */}
         <Route path="/student-dashboard" element={<StudentDashboard />} />
         <Route path="/student/courses/:courseId" element={<StudentCourseDetail />} />
+        <Route path="/browse-courses" element={<BrowseCourses onBack={() => window.history.back()} />} />
+        <Route path="/discussions" element={<DiscussionForum onBack={() => window.history.back()} />} />
       </Routes>
     </Router>
   );

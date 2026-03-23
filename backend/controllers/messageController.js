@@ -1,3 +1,4 @@
+// backend/controllers/messageController.js
 const Message = require('../models/Message');
 const Course = require('../models/Course');
 const Enrollment = require('../models/Enrollment');
@@ -32,15 +33,22 @@ exports.sendMessage = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Course is required for messaging' });
     }
 
-    const message = await Message.create({
+    const newMessage = await Message.create({
       sender,
       receiver,
       course,
       content
     });
 
-    res.status(201).json({ success: true, data: message });
+    // FIX: Populate before sending response so frontend doesn't get "ID only"
+    const populatedMessage = await Message.findById(newMessage._id)
+      .populate('sender', 'name email')
+      .populate('receiver', 'name email')
+      .populate('course', 'title');
+
+    res.status(201).json({ success: true, data: populatedMessage });
   } catch (error) {
+    console.error('Error sending message:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -52,6 +60,7 @@ exports.getInbox = async (req, res) => {
   try {
     const messages = await Message.find({ receiver: req.user.id })
       .populate('sender', 'name email')
+      .populate('receiver', 'name email')
       .populate('course', 'title')
       .sort('-createdAt');
     res.json({ success: true, data: messages });
@@ -66,6 +75,7 @@ exports.getInbox = async (req, res) => {
 exports.getSent = async (req, res) => {
   try {
     const messages = await Message.find({ sender: req.user.id })
+      .populate('sender', 'name email')
       .populate('receiver', 'name email')
       .populate('course', 'title')
       .sort('-createdAt');
@@ -89,6 +99,35 @@ exports.markRead = async (req, res) => {
     await message.save();
     res.json({ success: true, data: message });
   } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get conversation between two users for a specific course
+// @route   GET /api/messages?course=:courseId&user=:userId
+// @access  Private
+exports.getConversation = async (req, res) => {
+  try {
+    const { course, user } = req.query;
+    const currentUser = req.user.id;
+    
+    if (!course || !user) {
+      return res.status(400).json({ success: false, message: 'Course and user parameters are required' });
+    }
+    
+    const messages = await Message.find({
+      course: course,
+      $or: [
+        { sender: currentUser, receiver: user },
+        { sender: user, receiver: currentUser }
+      ]
+    }).sort('createdAt')
+      .populate('sender', 'name email')
+      .populate('receiver', 'name email');
+    
+    res.json({ success: true, data: messages });
+  } catch (error) {
+    console.error('Error fetching conversation:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

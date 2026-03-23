@@ -8,7 +8,7 @@ import {
   Clock, Award, Book, PlayCircle, 
   LogOut, Menu, X,
   Download, Heart, MessageCircle, TrendingUp,
-  ArrowUpRight, Users
+  ArrowUpRight, Users, Compass
 } from 'lucide-react';
 
 const API_BASE_URL = 'http://localhost:5000/api';
@@ -64,13 +64,11 @@ const StudentDashboard = () => {
         setStats(prev => ({ ...prev, enrolledCourses: coursesData.data.length }));
       }
 
-      // For simplicity, keep mock data for other stats, upcoming lessons, resources, activity feed
-      // In a full implementation you would have endpoints for these as well.
-      // We'll simulate a small delay to make the transition smooth.
+      // For now, keep mock data for other stats, upcoming lessons, resources, activity feed
       setTimeout(() => {
         setStats(prev => ({
           ...prev,
-          completedLessons: 18,      // placeholders – replace with real API later
+          completedLessons: 18,
           resources: 42,
           achievementPoints: 320,
           learningStreak: 12
@@ -88,7 +86,6 @@ const StudentDashboard = () => {
       }, 500);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      // Fallback to mock data if API fails
       setMockData();
       setLoading(false);
     }
@@ -179,6 +176,7 @@ const StudentDashboard = () => {
             <p className="px-2 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Student Menu</p>
             <Link to="/student-dashboard" className="flex items-center space-x-3 px-3 py-2.5 bg-brand-500/10 text-brand-400 rounded-xl font-medium"><Layout className="h-5 w-5" /><span>Dashboard</span></Link>
             <Link to="/courses" className="flex items-center space-x-3 px-3 py-2.5 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition-colors"><Book className="h-5 w-5" /><span>My Courses</span></Link>
+            <Link to="/browse-courses" className="flex items-center space-x-3 px-3 py-2.5 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition-colors"><Compass className="h-5 w-5" /><span>Browse Courses</span></Link>
             <Link to="/schedule" className="flex items-center space-x-3 px-3 py-2.5 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition-colors"><Calendar className="h-5 w-5" /><span>Schedule</span></Link>
             <Link to="/resources" className="flex items-center space-x-3 px-3 py-2.5 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition-colors"><BookOpen className="h-5 w-5" /><span>Resources</span></Link>
             <Link to="/discussions" className="flex items-center space-x-3 px-3 py-2.5 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition-colors"><MessageCircle className="h-5 w-5" /><span>Discussions</span></Link>
@@ -198,6 +196,10 @@ const StudentDashboard = () => {
           </div>
           <div className="flex items-center space-x-4">
             <button onClick={() => setNotificationsOpen(!notificationsOpen)} className="p-2 text-slate-500 hover:bg-slate-100 rounded-xl relative transition-colors"><Bell className="h-5 w-5" /><span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span></button>
+            <Link to="/browse-courses" className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-all shadow-md shadow-indigo-500/20">
+              <Compass className="h-4 w-4" />
+              <span>Browse Courses</span>
+            </Link>
             <div className="h-8 w-px bg-slate-200 mx-1"></div>
             <div className="flex items-center space-x-3">
               <div className="text-right hidden sm:block"><p className="text-sm font-bold text-slate-900">{user.name}</p><p className="text-xs text-slate-500">Student ID: {formatStudentId()}</p></div>
@@ -280,7 +282,7 @@ const StudentDashboard = () => {
                     ) : (
                       <div className="bg-white p-8 rounded-3xl border border-slate-100 text-center">
                         <p className="text-slate-500">You haven't enrolled in any courses yet.</p>
-                        <Link to="/courses" className="inline-block mt-4 text-indigo-600 font-bold hover:underline">Browse Courses</Link>
+                        <Link to="/browse-courses" className="inline-block mt-4 text-indigo-600 font-bold hover:underline">Browse Available Courses</Link>
                       </div>
                     )}
                   </div>

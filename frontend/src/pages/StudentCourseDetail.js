@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Video, FileText, MessageSquare, Calendar, Clock, Download, Send } from 'lucide-react';
+import { ChevronLeft, Video, FileText, MessageSquare, Calendar, Clock, Download, Send, User, CheckCircle } from 'lucide-react';
+import MessageThread from '../components/MessageThread';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -13,9 +14,9 @@ const StudentCourseDetail = () => {
   const [lessons, setLessons] = useState([]);
   const [resources, setResources] = useState([]);
   const [activeTab, setActiveTab] = useState('lessons');
-  const [messageContent, setMessageContent] = useState('');
-  const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [conversation, setConversation] = useState(null);
+  const [loadingMessages, setLoadingMessages] = useState(false);
 
   useEffect(() => {
     const fetchCourseData = async () => {
@@ -32,6 +33,7 @@ const StudentCourseDetail = () => {
         });
         const courseData = await courseRes.json();
         if (courseData.success) setCourse(courseData.data);
+        else throw new Error('Course not found');
 
         // Fetch lessons
         const lessonsRes = await fetch(`${API_BASE_URL}/lessons/courses/${courseId}/lessons`, {
@@ -55,36 +57,44 @@ const StudentCourseDetail = () => {
     fetchCourseData();
   }, [courseId, navigate]);
 
-  const sendMessage = async () => {
-    if (!messageContent.trim()) return;
-    setSending(true);
+  // Fetch conversation when message tab is opened
+  useEffect(() => {
+    if (course && activeTab === 'message') {
+      fetchConversation();
+    }
+  }, [course, activeTab]);
+
+  const fetchConversation = async () => {
+    setLoadingMessages(true);
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${API_BASE_URL}/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          receiver: course.tutor._id,
-          course: course._id,
-          content: messageContent
-        })
+      const res = await fetch(`${API_BASE_URL}/messages?course=${course._id}&user=${course.tutor._id}`, {
+        headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
       if (data.success) {
-        alert('Message sent to tutor!');
-        setMessageContent('');
+        setConversation({
+          otherUser: course.tutor,
+          course: course,
+          messages: data.data
+        });
       } else {
-        alert(data.message || 'Failed to send message');
+        // Create empty conversation if none exists
+        setConversation({
+          otherUser: course.tutor,
+          course: course,
+          messages: []
+        });
       }
     } catch (error) {
-      console.error('Error sending message:', error);
-      alert('Network error. Please try again.');
+      console.error('Error fetching conversation:', error);
     } finally {
-      setSending(false);
+      setLoadingMessages(false);
     }
+  };
+
+  const handleMessageSent = () => {
+    fetchConversation();
   };
 
   if (loading) return <div className="flex justify-center py-12"><div className="w-12 h-12 border-4 border-brand-600 border-t-transparent rounded-full animate-spin"></div></div>;
@@ -114,8 +124,8 @@ const StudentCourseDetail = () => {
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === tab ? 'bg-brand-50 text-brand-600 border-b-2 border-brand-500' : 'text-slate-500 hover:bg-slate-50'}`}
               >
-                {tab === 'lessons' && <><Video className="h-4 w-4 inline mr-2" />Lessons</>}
-                {tab === 'resources' && <><FileText className="h-4 w-4 inline mr-2" />Resources</>}
+                {tab === 'lessons' && <><Video className="h-4 w-4 inline mr-2" />Lessons ({lessons.length})</>}
+                {tab === 'resources' && <><FileText className="h-4 w-4 inline mr-2" />Resources ({resources.length})</>}
                 {tab === 'message' && <><MessageSquare className="h-4 w-4 inline mr-2" />Message Tutor</>}
               </button>
             ))}
@@ -123,6 +133,7 @@ const StudentCourseDetail = () => {
         </div>
 
         <div className="p-6">
+          {/* Lessons Tab */}
           {activeTab === 'lessons' && (
             <div className="space-y-4">
               {lessons.length > 0 ? lessons.map(lesson => (
@@ -145,6 +156,7 @@ const StudentCourseDetail = () => {
             </div>
           )}
 
+          {/* Resources Tab */}
           {activeTab === 'resources' && (
             <div className="space-y-4">
               {resources.length > 0 ? resources.map(res => (
@@ -161,24 +173,23 @@ const StudentCourseDetail = () => {
             </div>
           )}
 
+          {/* Message Tab */}
           {activeTab === 'message' && (
-            <div className="space-y-4">
-              <p className="text-slate-600">Have a question for {course.tutor?.name}? Send a message.</p>
-              <textarea
-                rows="4"
-                value={messageContent}
-                onChange={(e) => setMessageContent(e.target.value)}
-                placeholder="Type your message here..."
-                className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent focus:border-brand-500 rounded-xl focus:outline-none transition-all resize-none"
-              />
-              <button
-                onClick={sendMessage}
-                disabled={sending || !messageContent.trim()}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-brand-600 text-white rounded-xl font-bold hover:bg-brand-700 transition-all disabled:opacity-50"
-              >
-                {sending ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Send className="h-5 w-5" />}
-                {sending ? 'Sending...' : 'Send Message'}
-              </button>
+            <div className="min-h-[500px]">
+              {loadingMessages ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : (
+                <MessageThread 
+                  conversation={conversation || {
+                    otherUser: course.tutor,
+                    course: course,
+                    messages: []
+                  }}
+                  onMessageSent={handleMessageSent}
+                />
+              )}
             </div>
           )}
         </div>
