@@ -11,6 +11,6 @@ router.get('/courses/:courseId/resources', protect, resourceController.getCourse
 router.delete('/resources/:id', protect, authorize('tutor', 'admin'), resourceController.deleteResource);
 router.put('/resources/:id/download', protect, resourceController.incrementDownload);
 
-// No /file/:id route – files are served statically via /uploads/
+// No /file/:id route – files are served statically via /api/uploads/
 
 module.exports = router;

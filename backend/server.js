@@ -19,18 +19,30 @@ const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
-// Serve static files from 'uploads' folder
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Body parser
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 // Enable CORS
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }));
+
+// Body parser
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from 'uploads' folder at /api/uploads
+const uploadDir = path.join(__dirname, 'uploads');
+app.get('/api/uploads/:filename', (req, res) => {
+  const filePath = path.join(uploadDir, req.params.filename);
+  console.log(`🔍 Attempting to serve file: ${filePath}`);
+  res.sendFile(filePath, err => {
+    if (err) {
+      console.error(`❌ Error sending file: ${err.message}`);
+      if (!res.headersSent) {
+        res.status(404).json({ success: false, message: 'File not found' });
+      }
+    }
+  });
+});
 
 // Import routes (after middleware)
 const courseRoutes = require('./routes/courseRoutes');
