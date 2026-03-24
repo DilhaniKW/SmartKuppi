@@ -18,34 +18,53 @@ import TutorLessonCreate from './pages/TutorLessonCreate';
 import TutorResourceUpload from './pages/TutorResourceUpload';
 import BrowseCourses from './pages/BrowseCourses';
 import DiscussionForum from './pages/DiscussionForum';
+import StudentCourses from './pages/StudentCourses'; 
+import StudentSchedule from './pages/StudentSchedule';
+import TutorSchedule from './pages/TutorSchedule';
+
+
+
+// Create a wrapper component to use useNavigate
+const AppRoutes = () => {
+  const navigate = useNavigate();
+  
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+
+      {/* Admin Routes */}
+      <Route path="/admin-dashboard" element={<AdminDashboard />} />
+
+      {/* Tutor Routes */}
+      <Route path="/tutor-dashboard" element={<TutorDashboard />} />
+      <Route path="/tutor/courses" element={<TutorCourses />} />
+      <Route path="/tutor/create-course" element={<TutorCourseCreate />} />
+      <Route path="/tutor/courses/:courseId" element={<TutorCourseDetail />} />
+      <Route path="/tutor/messages" element={<TutorMessages />} />
+      <Route path="/tutor/create-lesson" element={<TutorLessonCreate />} />
+      <Route path="/tutor/upload-resource" element={<TutorResourceUpload />} />
+      <Route path="/tutor/schedule" element={<TutorSchedule onBack={() => navigate(-1)} />} />
+
+
+      {/* Student Routes */}
+      <Route path="/student-dashboard" element={<StudentDashboard />} />
+      <Route path="/student/courses/:courseId" element={<StudentCourseDetail />} />
+      <Route path="/courses" element={<StudentCourses onBack={() => navigate(-1)} />} />
+      <Route path="/browse-courses" element={<BrowseCourses onBack={() => navigate(-1)} />} />
+      <Route path="/discussions" element={<DiscussionForum onBack={() => navigate(-1)} />} />
+      <Route path="/schedule" element={<StudentSchedule onBack={() => navigate(-1)} />} />
+
+    </Routes>
+  );
+};
 
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-
-        {/* Admin Routes */}
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />
-
-        {/* Tutor Routes */}
-        <Route path="/tutor-dashboard" element={<TutorDashboard />} />
-        <Route path="/tutor/courses" element={<TutorCourses />} />
-        <Route path="/tutor/create-course" element={<TutorCourseCreate />} />
-        <Route path="/tutor/courses/:courseId" element={<TutorCourseDetail />} />
-        <Route path="/tutor/messages" element={<TutorMessages />} />
-        <Route path="/tutor/create-lesson" element={<TutorLessonCreate />} />
-        <Route path="/tutor/upload-resource" element={<TutorResourceUpload />} />
-
-        {/* Student Routes */}
-        <Route path="/student-dashboard" element={<StudentDashboard />} />
-        <Route path="/student/courses/:courseId" element={<StudentCourseDetail />} />
-        <Route path="/browse-courses" element={<BrowseCourses onBack={() => window.history.back()} />} />
-        <Route path="/discussions" element={<DiscussionForum onBack={() => window.history.back()} />} />
-      </Routes>
+      <AppRoutes />
     </Router>
   );
 }

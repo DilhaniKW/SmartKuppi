@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Video, FileText, MessageSquare, Calendar, Clock, Download, Send, User, CheckCircle } from 'lucide-react';
+import { Video, FileText, MessageSquare, Calendar, Clock, Download, User, CheckCircle } from 'lucide-react';
 import MessageThread from '../components/MessageThread';
+import StudentLayout from '../components/StudentLayout';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -97,19 +98,30 @@ const StudentCourseDetail = () => {
     fetchConversation();
   };
 
-  if (loading) return <div className="flex justify-center py-12"><div className="w-12 h-12 border-4 border-brand-600 border-t-transparent rounded-full animate-spin"></div></div>;
-  if (!course) return <div className="text-center py-12">Course not found</div>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
-  return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-7xl mx-auto space-y-8">
-      <div className="flex items-center gap-4">
-        <button onClick={() => navigate(-1)} className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-xl transition-all text-slate-500">
-          <ChevronLeft className="h-5 w-5" />
+  if (!course) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-slate-500">Course not found.</p>
+        <button onClick={() => navigate('/courses')} className="mt-4 text-indigo-600 hover:underline">
+          Back to My Courses
         </button>
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">{course.title}</h1>
-          <p className="text-slate-500 mt-1">Instructor: {course.tutor?.name || 'Unknown'}</p>
-        </div>
+      </div>
+    );
+  }
+
+  const content = (
+    <div className="max-w-7xl mx-auto space-y-8">
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">{course.title}</h1>
+        <p className="text-slate-500 mt-1">Instructor: {course.tutor?.name || 'Unknown'}</p>
       </div>
 
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
@@ -122,7 +134,7 @@ const StudentCourseDetail = () => {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === tab ? 'bg-brand-50 text-brand-600 border-b-2 border-brand-500' : 'text-slate-500 hover:bg-slate-50'}`}
+                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${activeTab === tab ? 'bg-indigo-50 text-indigo-600 border-b-2 border-indigo-500' : 'text-slate-500 hover:bg-slate-50'}`}
               >
                 {tab === 'lessons' && <><Video className="h-4 w-4 inline mr-2" />Lessons ({lessons.length})</>}
                 {tab === 'resources' && <><FileText className="h-4 w-4 inline mr-2" />Resources ({resources.length})</>}
@@ -148,7 +160,7 @@ const StudentCourseDetail = () => {
                       </div>
                     </div>
                     {lesson.meetingLink && new Date(lesson.date) > new Date() && (
-                      <a href={lesson.meetingLink} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 bg-brand-600 text-white text-xs font-bold rounded-lg hover:bg-brand-700 transition-all">Join Session</a>
+                      <a href={lesson.meetingLink} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-all">Join Session</a>
                     )}
                   </div>
                 </div>
@@ -165,7 +177,7 @@ const StudentCourseDetail = () => {
                     <h4 className="font-bold text-slate-900">{res.title}</h4>
                     <p className="text-xs text-slate-500">{res.fileType?.toUpperCase() || 'FILE'} • {res.downloads} downloads</p>
                   </div>
-                  <a href={`${API_BASE_URL}${res.fileUrl}`} download className="p-2 text-slate-400 hover:text-brand-600 rounded-lg transition-colors">
+                  <a href={`${API_BASE_URL}${res.fileUrl}`} download className="p-2 text-slate-400 hover:text-indigo-600 rounded-lg transition-colors">
                     <Download className="h-5 w-5" />
                   </a>
                 </div>
@@ -194,8 +206,10 @@ const StudentCourseDetail = () => {
           )}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
+
+  return <StudentLayout title={course.title}>{content}</StudentLayout>;
 };
 
 export default StudentCourseDetail;

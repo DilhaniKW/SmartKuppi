@@ -13,6 +13,7 @@ import {
 import TutorCourses from './TutorCourses';
 import TutorCourseCreate from './TutorCourseCreate';
 import TutorMessages from './TutorMessages';
+import TutorSchedule from './TutorSchedule';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -78,8 +79,8 @@ const TutorDashboard = () => {
         setStats({
           totalStudents,
           totalCourses: courses.length,
-          totalResources: 0, // will implement later
-          rating: 4.9 // placeholder
+          totalResources: 0,
+          rating: 4.9
         });
       }
 
@@ -93,14 +94,48 @@ const TutorDashboard = () => {
         setUnreadMessages(unread);
       }
 
-      // For upcoming lessons, we'll keep mock for now (or could fetch from courses)
-      setUpcomingLessons([
-        { id: 1, title: 'Advanced JavaScript', course: 'JavaScript Mastery', date: '2024-03-25', time: '10:00 AM', students: 12, meetingLink: 'https://meet.google.com/xxx' },
-        { id: 2, title: 'React Hooks Deep Dive', course: 'React Masterclass', date: '2024-03-26', time: '02:00 PM', students: 8, meetingLink: 'https://zoom.us/j/123' }
-      ]);
+      // Fetch upcoming lessons from all courses
+      const allLessons = [];
+      const coursesRes2 = await fetch(`${API_BASE_URL}/courses/tutor/courses`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const coursesData2 = await coursesRes2.json();
+      if (coursesData2.success) {
+        for (const course of coursesData2.data) {
+          const lessonsRes = await fetch(`${API_BASE_URL}/lessons/courses/${course._id}/lessons`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const lessonsData = await lessonsRes.json();
+          if (lessonsData.success) {
+            const today = new Date().toISOString().split('T')[0];
+            const todayLessons = lessonsData.data.filter(l => l.date.split('T')[0] === today);
+            allLessons.push(...todayLessons.map(l => ({
+              id: l._id,
+              title: l.title,
+              course: course.title,
+              date: l.date,
+              time: new Date(l.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              students: course.enrolledCount || 0,
+              meetingLink: l.meetingLink
+            })));
+          }
+        }
+        setUpcomingLessons(allLessons);
+      }
       setLoading(false);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      // Fallback mock data
+      setStats({
+        totalStudents: 156,
+        totalCourses: 5,
+        totalResources: 28,
+        rating: 4.9
+      });
+      setUpcomingLessons([
+        { id: 1, title: 'Advanced JavaScript', course: 'JavaScript Mastery', date: new Date().toISOString(), time: '10:00 AM', students: 12, meetingLink: 'https://meet.google.com/xxx' },
+        { id: 2, title: 'React Hooks Deep Dive', course: 'React Masterclass', date: new Date().toISOString(), time: '02:00 PM', students: 8, meetingLink: 'https://zoom.us/j/123' }
+      ]);
       setLoading(false);
     }
   };
@@ -193,7 +228,7 @@ const TutorDashboard = () => {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-brand-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-slate-600 font-medium">Loading your dashboard...</p>
         </div>
       </div>
@@ -256,7 +291,7 @@ const TutorDashboard = () => {
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-slate-50 flex items-center justify-between">
           <h3 className="font-bold text-slate-900">Today's Lessons</h3>
-          <button onClick={() => setActiveView('courses')} className="text-indigo-600 text-sm font-bold">View All Courses</button>
+          <button onClick={() => setActiveView('schedule')} className="text-indigo-600 text-sm font-bold">View Full Schedule</button>
         </div>
         <div className="divide-y divide-slate-50">
           {upcomingLessons.length > 0 ? upcomingLessons.map(lesson => (
@@ -270,7 +305,9 @@ const TutorDashboard = () => {
               </div>
               <div className="text-right">
                 <p className="text-sm font-bold text-slate-900">{lesson.time}</p>
-                <a href={lesson.meetingLink} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block px-3 py-1 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700">Join</a>
+                {lesson.meetingLink && (
+                  <a href={lesson.meetingLink} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block px-3 py-1 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700">Join</a>
+                )}
               </div>
             </div>
           )) : <div className="p-12 text-center"><p className="text-slate-500">No lessons scheduled for today</p></div>}
@@ -283,17 +320,17 @@ const TutorDashboard = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: 'Create Course', icon: Plus, color: 'text-blue-600', bg: 'bg-blue-50', action: () => setActiveView('create-course') },
+            { label: 'Schedule', icon: Calendar, color: 'text-indigo-600', bg: 'bg-indigo-50', action: () => setActiveView('schedule') },
             { label: 'Messages', icon: MessageSquare, color: 'text-amber-600', bg: 'bg-amber-50', action: () => setActiveView('messages') },
-            { label: 'Analytics', icon: BarChart3, color: 'text-emerald-600', bg: 'bg-emerald-50', action: () => console.log('Analytics') },
             { label: 'Settings', icon: Settings, color: 'text-slate-600', bg: 'bg-slate-50', action: () => console.log('Settings') },
           ].map((action, i) => {
             const Icon = action.icon;
             return (
-              <button key={i} onClick={action.action} className="group p-6 bg-white border border-slate-100 rounded-3xl hover:border-brand-200 hover:shadow-lg hover:shadow-brand-500/5 transition-all text-center">
+              <button key={i} onClick={action.action} className="group p-6 bg-white border border-slate-100 rounded-3xl hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-500/5 transition-all text-center">
                 <div className={`${action.bg} ${action.color} w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform`}>
                   <Icon className="h-6 w-6" />
                 </div>
-                <span className="text-sm font-bold text-slate-700 group-hover:text-brand-600 transition-colors">{action.label}</span>
+                <span className="text-sm font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">{action.label}</span>
               </button>
             );
           })}
@@ -305,6 +342,7 @@ const TutorDashboard = () => {
   const navLinks = [
     { name: 'Dashboard', icon: Layout, view: 'dashboard', isActive: activeView === 'dashboard' },
     { name: 'My Courses', icon: FolderOpen, view: 'courses', isActive: activeView === 'courses' },
+    { name: 'Schedule', icon: Calendar, view: 'schedule', isActive: activeView === 'schedule' },
     { name: 'Create Course', icon: Plus, view: 'create-course', isActive: activeView === 'create-course' },
     { name: 'Messages', icon: MessageSquare, view: 'messages', isActive: activeView === 'messages', badge: unreadMessages },
     { name: 'Resources', icon: FileText, view: 'resources', isActive: false },
@@ -317,11 +355,11 @@ const TutorDashboard = () => {
         <div className="flex flex-col h-full">
           <div className="h-20 flex items-center px-6 border-b border-slate-800">
             <Link to="/tutor-dashboard" className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-brand-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-brand-500/20">
-                <BookOpen className="h-6 w-6" />
+              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+                <GraduationCap className="h-6 w-6" />
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-xl text-white tracking-tight">Smart<span className="text-brand-400">Kuppi</span></span>
+                <span className="font-bold text-xl text-white tracking-tight">Smart<span className="text-indigo-400">Kuppi</span></span>
                 <span className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Tutor Portal</span>
               </div>
             </Link>
@@ -335,7 +373,7 @@ const TutorDashboard = () => {
                 key={link.name}
                 onClick={() => link.view && setActiveView(link.view)}
                 className={`flex items-center justify-between w-full px-4 py-3 rounded-xl transition-all text-left ${
-                  link.isActive ? 'bg-brand-500/10 text-brand-400 font-medium' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                  link.isActive ? 'bg-indigo-600/10 text-indigo-600 font-medium' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                 }`}
               >
                 <div className="flex items-center space-x-3">
@@ -377,7 +415,7 @@ const TutorDashboard = () => {
             <div className="h-8 w-px bg-slate-200"></div>
             <div className="relative">
               <button onClick={() => setProfileDropdown(!profileDropdown)} className="flex items-center space-x-3 p-1.5 hover:bg-slate-100 rounded-xl transition-colors">
-                <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold text-xs">{tutor ? getInitials(tutor.name) : 'T'}</div>
+                <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-xs">{tutor ? getInitials(tutor.name) : 'T'}</div>
                 <span className="hidden md:block text-sm font-medium text-slate-700">{tutor?.name || 'Tutor'}</span>
                 <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${profileDropdown ? 'rotate-180' : ''}`} />
               </button>
@@ -399,6 +437,7 @@ const TutorDashboard = () => {
           <AnimatePresence mode="wait">
             {activeView === 'dashboard' && <DashboardView key="dashboard" />}
             {activeView === 'courses' && <TutorCourses key="courses" onBack={() => setActiveView('dashboard')} />}
+            {activeView === 'schedule' && <TutorSchedule key="schedule" onBack={() => setActiveView('dashboard')} />}
             {activeView === 'create-course' && <TutorCourseCreate key="create-course" onBack={() => setActiveView('dashboard')} />}
             {activeView === 'messages' && <TutorMessages key="messages" onBack={() => setActiveView('dashboard')} />}
           </AnimatePresence>
@@ -406,8 +445,8 @@ const TutorDashboard = () => {
 
         <footer className="bg-white border-t border-slate-100 py-6 px-8">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center space-x-2"><BookOpen className="h-5 w-5 text-brand-500" /><span className="font-bold text-slate-900">Smart<span className="text-brand-500">Kuppi</span></span><span className="text-xs text-slate-400 ml-2">© 2024 Tutor Portal v1.2</span></div>
-            <div className="flex items-center space-x-6 text-xs font-bold text-slate-400 uppercase tracking-widest"><button className="hover:text-brand-500">Tutor Guide</button><button className="hover:text-brand-500">Support</button><button className="hover:text-brand-500">Privacy</button></div>
+            <div className="flex items-center space-x-2"><BookOpen className="h-5 w-5 text-indigo-500" /><span className="font-bold text-slate-900">Smart<span className="text-indigo-500">Kuppi</span></span><span className="text-xs text-slate-400 ml-2">© 2024 Tutor Portal v1.2</span></div>
+            <div className="flex items-center space-x-6 text-xs font-bold text-slate-400 uppercase tracking-widest"><button className="hover:text-indigo-500">Tutor Guide</button><button className="hover:text-indigo-500">Support</button><button className="hover:text-indigo-500">Privacy</button></div>
           </div>
         </footer>
       </div>

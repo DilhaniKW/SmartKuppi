@@ -5,12 +5,13 @@ import { motion } from 'framer-motion';
 import { 
   Search, Filter, ChevronLeft, Users, BookOpen, 
   Star, GraduationCap, DollarSign, ExternalLink,
-  Loader, AlertCircle, CheckCircle, X
+  Loader, AlertCircle, CheckCircle
 } from 'lucide-react';
+import StudentLayout from '../components/StudentLayout';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
-const BrowseCourses = ({ onBack }) => {
+const BrowseCourses = () => {
   const [courses, setCourses] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -109,30 +110,11 @@ const BrowseCourses = ({ onBack }) => {
     setFilteredCourses(filtered);
   }, [searchTerm, subjectFilter, courses]);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <Loader className="h-8 w-8 animate-spin text-indigo-600" />
-      </div>
-    );
-  }
-
-  return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-7xl mx-auto space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={onBack}
-            className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-xl transition-all text-slate-500"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Browse Courses</h1>
-            <p className="text-slate-500 mt-1">Discover and enroll in courses that interest you.</p>
-          </div>
-        </div>
+  const content = (
+    <div className="max-w-7xl mx-auto space-y-8">
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Browse Courses</h1>
+        <p className="text-slate-500 mt-1">Discover and enroll in courses that interest you.</p>
       </div>
 
       {/* Search and Filter */}
@@ -166,7 +148,11 @@ const BrowseCourses = ({ onBack }) => {
       </div>
 
       {/* Course Grid */}
-      {filteredCourses.length === 0 ? (
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <Loader className="h-8 w-8 animate-spin text-indigo-600" />
+        </div>
+      ) : filteredCourses.length === 0 ? (
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-12 text-center">
           <GraduationCap className="h-16 w-16 text-slate-300 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-slate-900 mb-2">No courses found</h3>
@@ -259,8 +245,10 @@ const BrowseCourses = ({ onBack }) => {
           })}
         </div>
       )}
-    </motion.div>
+    </div>
   );
+
+  return <StudentLayout title="Browse Courses">{content}</StudentLayout>;
 };
 
 export default BrowseCourses;

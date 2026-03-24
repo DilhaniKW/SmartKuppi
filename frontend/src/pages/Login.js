@@ -116,7 +116,7 @@ const Login = () => {
   const fillDemoCredentials = async (role) => {
     // You can either use mock data or fetch from backend
     const demoCredentials = {
-      admin: { email: 'admin@smartkuppi.com', password: 'admin123' },
+      admin: { email: 'admin@smartkuppi.com', password: 'Admin@123' },
       tutor: { email: 'tutor@example.com', password: 'tutor123' },
       student: { email: 'student@example.com', password: 'student123' }
     };

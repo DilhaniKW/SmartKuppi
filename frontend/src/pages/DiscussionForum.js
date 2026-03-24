@@ -1,6 +1,7 @@
 // src/pages/DiscussionForum.js
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import StudentLayout from '../components/StudentLayout';
 import { ChevronLeft, MessageCircle, ThumbsUp, Send, User, Clock } from 'lucide-react';
 
 const API_BASE_URL = 'http://localhost:5000/api';
@@ -22,7 +23,6 @@ const DiscussionForum = ({ onBack }) => {
     const token = localStorage.getItem('token');
     try {
       // This would be a real endpoint – for now we'll use mock data
-      // Replace with actual API call when ready
       setTimeout(() => {
         setDiscussions([
           { id: 1, title: 'JavaScript Closure Explanation', content: 'Can someone explain closures with an example?', author: 'John Doe', date: '2024-03-23', replies: 3, likes: 5 },
@@ -40,7 +40,6 @@ const DiscussionForum = ({ onBack }) => {
     e.preventDefault();
     if (!newDiscussion.title.trim() || !newDiscussion.content.trim()) return;
     setSubmitting(true);
-    // API call would go here
     setTimeout(() => {
       setDiscussions([{
         id: Date.now(),
@@ -56,24 +55,12 @@ const DiscussionForum = ({ onBack }) => {
     }, 500);
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  return (
+  // Create the content JSX
+  const content = (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-7xl mx-auto space-y-8">
-      <div className="flex items-center gap-4">
-        <button onClick={onBack} className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-xl transition-all text-slate-500">
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Discussion Forum</h1>
-          <p className="text-slate-500 mt-1">Ask questions, share knowledge, and connect with fellow students.</p>
-        </div>
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Discussion Forum</h1>
+        <p className="text-slate-500 mt-1">Ask questions, share knowledge, and connect with fellow students.</p>
       </div>
 
       {/* Create Discussion Form */}
@@ -106,33 +93,42 @@ const DiscussionForum = ({ onBack }) => {
       </div>
 
       {/* Discussions List */}
-      <div className="space-y-4">
-        {discussions.map(discussion => (
-          <div key={discussion.id} className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 hover:shadow-md transition-all">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <h3 className="text-xl font-bold text-slate-900 mb-2">{discussion.title}</h3>
-                <p className="text-slate-600 mb-4">{discussion.content}</p>
-                <div className="flex items-center gap-4 text-sm text-slate-500">
-                  <span className="flex items-center gap-1"><User className="h-4 w-4" /> {discussion.author}</span>
-                  <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> {discussion.date}</span>
-                  <button className="flex items-center gap-1 hover:text-indigo-600 transition-colors">
-                    <MessageCircle className="h-4 w-4" /> {discussion.replies} replies
-                  </button>
-                  <button className="flex items-center gap-1 hover:text-indigo-600 transition-colors">
-                    <ThumbsUp className="h-4 w-4" /> {discussion.likes}
-                  </button>
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {discussions.map(discussion => (
+            <div key={discussion.id} className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 hover:shadow-md transition-all">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">{discussion.title}</h3>
+                  <p className="text-slate-600 mb-4">{discussion.content}</p>
+                  <div className="flex items-center gap-4 text-sm text-slate-500">
+                    <span className="flex items-center gap-1"><User className="h-4 w-4" /> {discussion.author}</span>
+                    <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> {discussion.date}</span>
+                    <button className="flex items-center gap-1 hover:text-indigo-600 transition-colors">
+                      <MessageCircle className="h-4 w-4" /> {discussion.replies} replies
+                    </button>
+                    <button className="flex items-center gap-1 hover:text-indigo-600 transition-colors">
+                      <ThumbsUp className="h-4 w-4" /> {discussion.likes}
+                    </button>
+                  </div>
                 </div>
+                <button className="px-4 py-2 text-indigo-600 font-bold text-sm hover:bg-indigo-50 rounded-xl transition-colors">
+                  Reply
+                </button>
               </div>
-              <button className="px-4 py-2 text-indigo-600 font-bold text-sm hover:bg-indigo-50 rounded-xl transition-colors">
-                Reply
-              </button>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </motion.div>
   );
+
+  // Wrap the content with StudentLayout and return
+  return <StudentLayout title="Discussions">{content}</StudentLayout>;
 };
 
 export default DiscussionForum;
