@@ -114,15 +114,7 @@ const StudentLayout = ({ children, title, showSearch = true }) => {
             <button onClick={() => setIsSidebarOpen(true)} className={`lg:hidden p-2 rounded-lg hover:bg-slate-100 text-slate-600 ${isSidebarOpen ? 'hidden' : 'block'}`}>
               <Menu className="h-6 w-6" />
             </button>
-            {showSearch && (
-              <div className="hidden md:flex items-center bg-slate-100 rounded-xl px-4 py-2 w-64 lg:w-96">
-                <Search className="h-4 w-4 text-slate-400 mr-2" />
-                <input type="text" placeholder="Search courses, resources..." className="bg-transparent border-none focus:ring-0 text-sm w-full" />
-              </div>
-            )}
-            {!showSearch && (
-              <h1 className="text-xl font-bold text-slate-900">{title}</h1>
-            )}
+            <h1 className="text-xl font-bold text-slate-900">{title}</h1>
           </div>
 
           <div className="flex items-center space-x-4">

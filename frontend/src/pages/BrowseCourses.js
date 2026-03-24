@@ -8,6 +8,7 @@ import {
   Loader, AlertCircle, CheckCircle
 } from 'lucide-react';
 import StudentLayout from '../components/StudentLayout';
+import CourseCardHeader from '../components/CourseCardHeader';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -167,12 +168,7 @@ const BrowseCourses = () => {
 
             return (
               <div key={course._id} className="bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all overflow-hidden group">
-                <div className="h-48 bg-gradient-to-r from-indigo-500 to-indigo-600 relative flex items-center justify-center">
-                  {course.thumbnail ? (
-                    <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <GraduationCap className="h-16 w-16 text-white/60" />
-                  )}
+                <CourseCardHeader course={course} height="h-48">
                   {course.price > 0 ? (
                     <span className="absolute top-3 right-3 px-2 py-1 bg-amber-500 text-white text-[10px] font-bold rounded-full">
                       LKR {course.price}
@@ -182,7 +178,7 @@ const BrowseCourses = () => {
                       Free
                     </span>
                   )}
-                </div>
+                </CourseCardHeader>
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">

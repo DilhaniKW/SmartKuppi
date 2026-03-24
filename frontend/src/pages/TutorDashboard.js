@@ -17,11 +17,11 @@ import TutorSchedule from './TutorSchedule';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
-const TutorDashboard = () => {
+const TutorDashboard = ({ initialView = 'dashboard' }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [profileDropdown, setProfileDropdown] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [activeView, setActiveView] = useState('dashboard');
+  const [activeView, setActiveView] = useState(initialView);
   const [tutor, setTutor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tutorStatus, setTutorStatus] = useState('approved');
@@ -402,10 +402,7 @@ const TutorDashboard = () => {
             <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="lg:hidden p-2 text-slate-600">
               {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
-            <div className="hidden md:flex items-center bg-slate-100 rounded-xl px-4 py-2 w-64 lg:w-96">
-              <Search className="h-4 w-4 text-slate-400 mr-2" />
-              <input type="text" placeholder="Search students, courses..." className="bg-transparent border-none focus:ring-0 text-sm w-full" />
-            </div>
+
           </div>
           <div className="flex items-center space-x-4">
             <button className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">

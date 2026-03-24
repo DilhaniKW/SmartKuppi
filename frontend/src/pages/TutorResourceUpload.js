@@ -178,8 +178,8 @@ const TutorResourceUpload = () => {
 
         <div className="flex gap-4 pt-4">
           <button type="button" onClick={() => navigate(`/tutor/courses/${courseId}`)} className="flex-1 py-4 bg-white border-2 border-slate-200 text-slate-700 font-bold rounded-2xl hover:bg-slate-50">Cancel</button>
-          <button type="submit" disabled={isSubmitting} className="flex-1 py-4 bg-brand-600 text-white font-bold rounded-2xl hover:bg-brand-700 disabled:opacity-70 flex items-center justify-center gap-2">
-            {isSubmitting ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Upload className="h-5 w-5" />}
+          <button type="submit" disabled={isSubmitting} className="flex-1 py-4 bg-white border-2 border-slate-200 text-slate-700 font-bold rounded-2xl hover:bg-slate-50 disabled:opacity-70 flex items-center justify-center gap-2">
+            {isSubmitting ? <div className="w-5 h-5 border-2 border-slate-700 border-t-transparent rounded-full animate-spin"></div> : <Upload className="h-5 w-5" />}
             {isSubmitting ? 'Uploading...' : 'Upload Resource'}
           </button>
         </div>

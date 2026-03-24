@@ -40,13 +40,13 @@ const AppRoutes = () => {
 
       {/* Tutor Routes */}
       <Route path="/tutor-dashboard" element={<TutorDashboard />} />
-      <Route path="/tutor/courses" element={<TutorCourses />} />
-      <Route path="/tutor/create-course" element={<TutorCourseCreate />} />
+      <Route path="/tutor/courses" element={<TutorDashboard initialView="courses" />} />
+      <Route path="/tutor/create-course" element={<TutorDashboard initialView="create-course" />} />
       <Route path="/tutor/courses/:courseId" element={<TutorCourseDetail />} />
-      <Route path="/tutor/messages" element={<TutorMessages />} />
+      <Route path="/tutor/messages" element={<TutorDashboard initialView="messages" />} />
       <Route path="/tutor/create-lesson" element={<TutorLessonCreate />} />
       <Route path="/tutor/upload-resource" element={<TutorResourceUpload />} />
-      <Route path="/tutor/schedule" element={<TutorSchedule onBack={() => navigate(-1)} />} />
+      <Route path="/tutor/schedule" element={<TutorDashboard initialView="schedule" />} />
 
 
       {/* Student Routes */}

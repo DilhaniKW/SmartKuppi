@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, FolderOpen, Plus, MoreVertical, Users, BookOpen, ExternalLink } from 'lucide-react';
+import CourseCardHeader from '../components/CourseCardHeader';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -81,16 +82,11 @@ const TutorCourses = ({ onBack = () => {} }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {courses.map(course => (
             <div key={course._id} className="bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all overflow-hidden group">
-              <div className="h-40 bg-gradient-to-r from-indigo-500 to-indigo-600 relative flex items-center justify-center">
-                {course.thumbnail ? (
-                  <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
-                ) : (
-                  <FolderOpen className="h-16 w-16 text-white/60" />
-                )}
+              <CourseCardHeader course={course} height="h-40">
                 <span className="absolute top-3 right-3 px-2 py-1 bg-white/90 text-[10px] font-bold rounded-full">
                   {course.status === 'published' ? 'Published' : 'Draft'}
                 </span>
-              </div>
+              </CourseCardHeader>
               <div className="p-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">

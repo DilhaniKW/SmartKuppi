@@ -8,6 +8,7 @@ import {
   TrendingUp, ArrowUpRight, Users, Compass
 } from 'lucide-react';
 import StudentLayout from '../components/StudentLayout';
+import CourseCardHeader from '../components/CourseCardHeader';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -178,13 +179,7 @@ const StudentDashboard = () => {
               {enrolledCourses.map((course) => (
                 <Link key={course._id} to={`/student/courses/${course._id}`} className="block">
                   <motion.div whileHover={{ y: -5 }} className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden group border-b-4 border-b-indigo-600">
-                    <div className="relative h-40 overflow-hidden">
-                      <img src={course.thumbnail || 'https://picsum.photos/400/200'} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                      <div className="absolute bottom-4 left-4">
-                        <span className="text-[10px] font-bold text-white uppercase tracking-widest bg-indigo-600 px-2 py-1 rounded">{course.tutor?.name || 'Tutor'}</span>
-                      </div>
-                    </div>
+                    <CourseCardHeader course={course} height="h-40" />
                     <div className="p-6">
                       <h3 className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors leading-tight">{course.title}</h3>
                       <div className="mt-4 space-y-2">

@@ -2,11 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  BookOpen, Clock, Users, GraduationCap, ArrowRight, Search, 
+import {
+  BookOpen, Clock, Users, GraduationCap, ArrowRight, Search,
   Filter, Star
 } from 'lucide-react';
 import StudentLayout from '../components/StudentLayout';
+import CourseCardHeader from '../components/CourseCardHeader';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -25,7 +26,7 @@ const StudentCourses = () => {
     setLoading(true);
     const token = localStorage.getItem('token');
     const userData = JSON.parse(localStorage.getItem('user'));
-    
+
     try {
       const res = await fetch(`${API_BASE_URL}/enrollments/students/${userData.id}/courses`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -84,13 +85,13 @@ const StudentCourses = () => {
   const getSortedCourses = () => {
     let sorted = [...courses];
     if (searchTerm) {
-      sorted = sorted.filter(course => 
+      sorted = sorted.filter(course =>
         course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         course.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         course.tutor?.name?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    switch(sortBy) {
+    switch (sortBy) {
       case 'progress':
         sorted.sort((a, b) => (b.progress || 0) - (a.progress || 0));
         break;
@@ -115,8 +116,8 @@ const StudentCourses = () => {
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">My Courses</h1>
           <p className="text-slate-500 mt-1">Continue your learning journey</p>
         </div>
-        <Link 
-          to="/browse-courses" 
+        <Link
+          to="/browse-courses"
           className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-all shadow-md shadow-indigo-500/20"
         >
           <GraduationCap className="h-4 w-4" />
@@ -194,16 +195,7 @@ const StudentCourses = () => {
           {filteredCourses.map((course) => (
             <Link key={course._id} to={`/student/courses/${course._id}`} className="block">
               <motion.div whileHover={{ y: -5 }} className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-xl transition-all group">
-                <div className="relative h-48 overflow-hidden bg-gradient-to-r from-indigo-500 to-indigo-600">
-                  <div className="w-full h-full flex items-center justify-center">
-                    <GraduationCap className="h-16 w-16 text-white/60" />
-                  </div>
-                  <div className="absolute bottom-4 left-4">
-                    <span className="text-xs font-bold text-white/90 bg-white/20 backdrop-blur-sm px-2 py-1 rounded-full">
-                      {course.subject || 'Course'}
-                    </span>
-                  </div>
-                </div>
+                <CourseCardHeader course={course} height="h-48" />
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-xl font-bold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
