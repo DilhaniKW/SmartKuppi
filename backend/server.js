@@ -6,7 +6,7 @@ const path = require('path');
 const adminRoutes = require('./routes/adminRoutes');
 
 // Load env vars
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 // Import database connection
 const connectDB = require('./config/db');
@@ -21,8 +21,8 @@ const app = express();
 
 // Enable CORS
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true
 }));
 
 // Body parser
@@ -32,16 +32,16 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files from 'uploads' folder at /api/uploads
 const uploadDir = path.join(__dirname, 'uploads');
 app.get('/api/uploads/:filename', (req, res) => {
-  const filePath = path.join(uploadDir, req.params.filename);
-  console.log(`🔍 Attempting to serve file: ${filePath}`);
-  res.sendFile(filePath, err => {
-    if (err) {
-      console.error(`❌ Error sending file: ${err.message}`);
-      if (!res.headersSent) {
-        res.status(404).json({ success: false, message: 'File not found' });
-      }
-    }
-  });
+    const filePath = path.join(uploadDir, req.params.filename);
+    console.log(`🔍 Attempting to serve file: ${filePath}`);
+    res.sendFile(filePath, err => {
+        if (err) {
+            console.error(`❌ Error sending file: ${err.message}`);
+            if (!res.headersSent) {
+                res.status(404).json({ success: false, message: 'File not found' });
+            }
+        }
+    });
 });
 
 // Import routes (after middleware)
@@ -50,6 +50,8 @@ const lessonRoutes = require('./routes/lessonRoutes');
 const resourceRoutes = require('./routes/resourceRoutes');
 const enrollmentRoutes = require('./routes/enrollmentRoutes');
 const messageRoutes = require('./routes/messageRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const noticeRoutes = require('./routes/noticeRoutes');
 
 // Mount routes
 app.use('/api/courses', courseRoutes);
@@ -57,48 +59,50 @@ app.use('/api/lessons', lessonRoutes);
 app.use('/api/resources', resourceRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/notices', noticeRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Base route
 app.get('/', (req, res) => {
-  res.json({ 
-    success: true,
-    message: 'Welcome to SmartKuppi API',
-    version: '1.0.0'
-  });
+    res.json({
+        success: true,
+        message: 'Welcome to SmartKuppi API',
+        version: '1.0.0'
+    });
 });
 
 // API Health check
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    success: true, 
-    message: 'API is running',
-    timestamp: new Date().toISOString()
-  });
+    res.json({
+        success: true,
+        message: 'API is running',
+        timestamp: new Date().toISOString()
+    });
 });
 
 // Error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ 
-    success: false, 
-    message: 'Something went wrong!' 
-  });
+    console.error(err.stack);
+    res.status(500).json({
+        success: false,
+        message: 'Something went wrong!'
+    });
 });
 
 // Handle 404
 app.use((req, res) => {
-  res.status(404).json({ 
-    success: false, 
-    message: `Cannot ${req.method} ${req.url}` 
-  });
+    res.status(404).json({
+        success: false,
+        message: `Cannot ${req.method} ${req.url}`
+    });
 });
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
-  console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+    console.log(`✅ Server running on port ${PORT}`);
+    console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
 });
