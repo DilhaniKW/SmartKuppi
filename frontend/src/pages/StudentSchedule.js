@@ -167,7 +167,7 @@ const StudentSchedule = () => {
         <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Completed</p>
           <p className="text-2xl font-bold text-slate-500">
-            {lessons.filter(l => new Date(l.date) < new Date()).length}
+            {lessons.filter(l => new Date(l.date) <new Date()).length}
           </p>
         </div>
       </div>
@@ -257,10 +257,7 @@ const StudentSchedule = () => {
                     <p className="text-slate-500">No upcoming lessons scheduled</p>
                   </div>
                 ) : (
-                  lessons
-                    .filter(l => new Date(l.date) >= new Date())
-                    .sort((a, b) => new Date(a.date) - new Date(b.date))
-                    .map(lesson => (
+                  lessons.filter(l => new Date(l.date) >= new Date()).sort((a, b) => new Date(a.date) - new Date(b.date)).map(lesson => (
                       <div key={lesson._id} className="p-6 hover:bg-slate-50 transition-all">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                           <div className="flex items-start gap-4">
@@ -307,3 +304,4 @@ const StudentSchedule = () => {
 };
 
 export default StudentSchedule;
+

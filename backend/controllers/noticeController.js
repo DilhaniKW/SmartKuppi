@@ -102,7 +102,7 @@ exports.getNoticeById = async(req, res) => {
 
         const enrollment = await Enrollment.findOne({
             student: req.user.id,
-            course: notice.course ? ._id,
+            course: notice.course?._id,
             status: 'active'
         });
 

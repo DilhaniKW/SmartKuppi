@@ -30,9 +30,13 @@ const TutorAnnouncements = () => {
         );
 
         const trimmedTitle = form.title.trim();
+        const trimmedContent = form.content.trim();
+        const isTitleOnlySpaces = form.title.length > 0 && trimmedTitle.length === 0;
+        const isContentOnlySpaces = form.content.length > 0 && trimmedContent.length === 0;
         const isTitleTooShort = trimmedTitle.length > 0 && trimmedTitle.length <= 3;
         const isCourseInvalid = form.scope === 'course' && !form.courseId;
-        const isSubmitDisabled = saving || isTitleTooShort || isCourseInvalid;
+        const isSubmitDisabled =
+            saving || !trimmedTitle || !trimmedContent || isTitleTooShort || isCourseInvalid;
 
         const loadData = async() => {
             setLoading(true);
@@ -74,12 +78,17 @@ const TutorAnnouncements = () => {
                 title: notice.title || '',
                 content: notice.content || '',
                 scope: notice.scope || 'common',
-                courseId: notice.course ? ._id || ''
+                courseId: notice.course?._id || ''
             });
         };
 
         const handleSubmit = async(event) => {
             event.preventDefault();
+
+            if (!trimmedTitle || !trimmedContent) {
+                setError('Title and content cannot be empty or only spaces');
+                return;
+            }
 
             if (isTitleTooShort) {
                 setError('Announcement title must be greater than 3 letters');
@@ -91,8 +100,8 @@ const TutorAnnouncements = () => {
 
             try {
                 const payload = {
-                    title: form.title,
-                    content: form.content,
+                    title: trimmedTitle,
+                    content: trimmedContent,
                     scope: form.scope,
                     courseId: form.scope === 'course' ? form.courseId : undefined
                 };
@@ -139,30 +148,22 @@ const TutorAnnouncements = () => {
             }
         };
 
-        return ( <
-                motion.div initial = {
+        return ( <motion.div initial = {
                     { opacity: 0, y: 16 } }
                 animate = {
                     { opacity: 1, y: 0 } }
                 className = "max-w-7xl mx-auto space-y-8" >
-                <
-                div className = "bg-white p-6 rounded-3xl border border-slate-100 shadow-sm" >
-                <
-                div className = "flex items-center gap-3 mb-4" >
-                <
-                Megaphone className = "h-5 w-5 text-indigo-600" / >
-                <
-                h2 className = "text-xl font-bold text-slate-900" > Create Announcement < /h2> <
-                /div>
+                <div className = "bg-white p-6 rounded-3xl border border-slate-100 shadow-sm" >
+                <div className = "flex items-center gap-3 mb-4" >
+                <Megaphone className = "h-5 w-5 text-indigo-600" />
+                <h2 className = "text-xl font-bold text-slate-900" > Create Announcement </h2> </div>
 
                 {
-                    error && < p className = "mb-3 text-sm text-rose-600 font-medium" > { error } < /p>}
+                    error && <p className = "mb-3 text-sm text-rose-600 font-medium" > { error } </p>}
 
-                    <
-                    form onSubmit = { handleSubmit }
+                    <form onSubmit = { handleSubmit }
                     className = "space-y-4" >
-                        <
-                        input
+                        <input
                     type = "text"
                     name = "title"
                     value = { form.title }
@@ -173,149 +174,98 @@ const TutorAnnouncements = () => {
               isTitleTooShort ? 'border-rose-400' : 'border-slate-200'
             }` }
                     /> {
-                        isTitleTooShort && ( <
-                            p className = "text-sm text-rose-600 font-medium" > Title must be greater than 3 letters. < /p>
+                        isTitleOnlySpaces && ( <p className = "text-sm text-rose-600 font-medium" > Title cannot be only spaces. </p>
+                        )
+                    } {
+                        isTitleTooShort && ( <p className = "text-sm text-rose-600 font-medium" > Title must be greater than 3 letters. </p>
                         )
                     }
 
-                    <
-                    textarea
+                    <textarea
                     name = "content"
                     value = { form.content }
                     onChange = { handleChange }
                     required
                     rows = { 4 }
                     placeholder = "Write your announcement..."
-                    className = "w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 resize-none" /
-                        >
+                    className = "w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 resize-none" />
+                    {
+                        isContentOnlySpaces && ( <p className = "text-sm text-rose-600 font-medium" > Content cannot be only spaces. </p>
+                        )
+                    }
 
-                        <
-                        div className = "grid grid-cols-1 md:grid-cols-2 gap-4" >
-                        <
-                        select
+                        <div className = "grid grid-cols-1 md:grid-cols-2 gap-4" >
+                        <select
                     name = "scope"
                     value = { form.scope }
                     onChange = { handleChange }
                     className = "px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500" >
-                        <
-                        option value = "common" > Common(all students) < /option> <
-                        option value = "course" > Module - wise(specific course) < /option> <
-                        /select>
+                        <option value = "common" > Common(all students) </option> <option value = "course" > Module - wise(specific course) </option> </select>
 
                     {
-                        form.scope === 'course' ? ( <
-                            select name = "courseId"
+                        form.scope === 'course' ? ( <select name = "courseId"
                             value = { form.courseId }
                             onChange = { handleChange }
                             required className = "px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500" >
-                            <
-                            option value = "" > Select course < /option> {
-                                courses.map((course) => ( <
-                                    option key = { course._id }
-                                    value = { course._id } > { course.title } <
-                                    /option>
+                            <option value = "" > Select course </option> {
+                                courses.map((course) => ( <option key = { course._id }
+                                    value = { course._id } > { course.title } </option>
                                 ))
-                            } <
-                            /select>
-                        ) : ( <
-                            div className = "px-4 py-3 rounded-xl border border-dashed border-slate-200 text-sm text-slate-500 flex items-center" >
-                            Visible to all students <
-                            /div>
+                            } </select>
+                        ) : ( <div className = "px-4 py-3 rounded-xl border border-dashed border-slate-200 text-sm text-slate-500 flex items-center" >
+                            Visible to all students </div>
                         )
-                    } <
-                    /div>
+                    } </div>
 
-                    <
-                    div className = "flex items-center gap-3" >
-                        <
-                        button
+                    <div className = "flex items-center gap-3" >
+                        <button
                     type = "submit"
                     disabled = { isSubmitDisabled }
                     className = "inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 disabled:opacity-60" >
-                        <
-                        Save className = "h-4 w-4" / > { editingId ? 'Update' : 'Publish' } <
-                        /button> {
-                            editingId && ( <
-                                button type = "button"
+                        <Save className = "h-4 w-4" /> { editingId ? 'Update' : 'Publish' } </button> {
+                            editingId && ( <button type = "button"
                                 onClick = { resetForm }
                                 className = "px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-semibold" >
-                                Cancel Edit <
-                                /button>
+                                Cancel Edit </button>
                             )
-                        } <
-                        /div> <
-                        /form> <
-                        /div>
+                        } </div> </form> </div>
 
-                    <
-                    div className = "bg-white p-6 rounded-3xl border border-slate-100 shadow-sm" >
-                        <
-                        div className = "flex items-center gap-3 mb-4" >
-                        <
-                        Bell className = "h-5 w-5 text-indigo-600" / >
-                        <
-                        h2 className = "text-xl font-bold text-slate-900" > My Announcements < /h2> <
-                        /div>
+                    <div className = "bg-white p-6 rounded-3xl border border-slate-100 shadow-sm" >
+                        <div className = "flex items-center gap-3 mb-4" >
+                        <Bell className = "h-5 w-5 text-indigo-600" />
+                        <h2 className = "text-xl font-bold text-slate-900" > My Announcements </h2> </div>
 
                     {
-                        loading ? ( <
-                                div className = "flex justify-center py-10" >
-                                <
-                                div className = "w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" > < /div> <
-                                /div>
-                            ) : notices.length === 0 ? ( <
-                                p className = "text-slate-500 text-sm" > No announcements yet. < /p>
-                            ) : ( <
-                                div className = "space-y-4" > {
-                                    notices.map((notice) => ( <
-                                            div key = { notice._id }
+                        loading ? ( <div className = "flex justify-center py-10" >
+                                <div className = "w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" > </div> </div>
+                            ) : notices.length === 0 ? ( <p className = "text-slate-500 text-sm" > No announcements yet. </p>
+                            ) : ( <div className = "space-y-4" > {
+                                    notices.map((notice) => ( <div key = { notice._id }
                                             className = "border border-slate-100 rounded-2xl p-4" >
-                                            <
-                                            div className = "flex items-start justify-between gap-3" >
-                                            <
-                                            div >
-                                            <
-                                            h3 className = "font-bold text-slate-900" > { notice.title } < /h3> <
-                                            p className = "text-sm text-slate-500 mt-1" > { notice.content } < /p> <
-                                            div className = "mt-2 flex flex-wrap items-center gap-2 text-xs" >
-                                            <
-                                            span className = { `px-2 py-1 rounded-full font-semibold ${notice.scope === 'common' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'}` } > { notice.scope === 'common' ? 'Common' : 'Module' } <
-                                            /span> {
-                                                notice.course && < span className = "px-2 py-1 rounded-full bg-slate-100 text-slate-600 font-semibold" > { notice.course.title } < /span>} <
-                                                    span className = "text-slate-400" > { new Date(notice.createdAt).toLocaleString() } < /span> <
-                                                    /div> <
-                                                    /div> <
-                                                    div className = "flex items-center gap-2" >
-                                                    <
-                                                    button
+                                            <div className = "flex items-start justify-between gap-3" >
+                                            <div >
+                                            <h3 className = "font-bold text-slate-900" > { notice.title } </h3> <p className = "text-sm text-slate-500 mt-1" > { notice.content } </p> <div className = "mt-2 flex flex-wrap items-center gap-2 text-xs" >
+                                            <span className = { `px-2 py-1 rounded-full font-semibold ${notice.scope === 'common' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'}` } > { notice.scope === 'common' ? 'Common' : 'Module' } </span> {
+                                                notice.course && <span className = "px-2 py-1 rounded-full bg-slate-100 text-slate-600 font-semibold" > { notice.course.title } </span>} <span className = "text-slate-400" > { new Date(notice.createdAt).toLocaleString() } </span> </div> </div> <div className = "flex items-center gap-2" >
+                                                    <button
                                                 onClick = {
                                                     () => handleEdit(notice) }
                                                 className = "p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
                                                 title = "Edit" >
-                                                    <
-                                                    Edit3 className = "h-4 w-4" / >
-                                                    <
-                                                    /button> <
-                                                    button
+                                                    <Edit3 className = "h-4 w-4" />
+                                                    </button> <button
                                                 onClick = {
                                                     () => handleDelete(notice._id) }
                                                 className = "p-2 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
                                                 title = "Delete" >
-                                                    <
-                                                    Trash2 className = "h-4 w-4" / >
-                                                    <
-                                                    /button> <
-                                                    /div> <
-                                                    /div> <
-                                                    /div>
+                                                    <Trash2 className = "h-4 w-4" />
+                                                    </button> </div> </div> </div>
                                             ))
-                                    } <
-                                    /div>
+                                    } </div>
                                 )
-                            } <
-                            /div> <
-                            /motion.div>
+                            } </div> </motion.div>
                     );
                 };
 
                 export default TutorAnnouncements;
+

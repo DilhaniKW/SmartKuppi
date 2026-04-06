@@ -6,6 +6,7 @@ const {
   getInbox,
   getSent,
   markRead,
+  markThreadRead,
   getConversation
 } = require('../controllers/messageController');
 const { protect } = require('../middleware/authMiddleware');
@@ -15,6 +16,7 @@ router.use(protect);
 router.post('/', sendMessage);
 router.get('/inbox', getInbox);
 router.get('/sent', getSent);
+router.put('/read-thread', markThreadRead);
 router.put('/:id/read', markRead);
 router.get('/', getConversation);  // This handles the query params for conversation
 

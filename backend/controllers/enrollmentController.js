@@ -29,7 +29,7 @@ exports.enroll = async(req, res) => {
 
         try {
             const studentUser = await User.findById(student).select('name');
-            const studentName = studentUser ? .name || 'A student';
+            const studentName = studentUser?.name || 'A student';
             await createNotification({
                 recipient: course.tutor,
                 sender: student,

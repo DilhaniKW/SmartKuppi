@@ -30,103 +30,76 @@ import StudentAnnouncements from './pages/StudentAnnouncements';
 const AppRoutes = () => {
         const navigate = useNavigate();
 
-        return ( <
-                Routes >
-                <
-                Route path = "/"
-                element = { < Home / > }
-                /> <
-                Route path = "/login"
-                element = { < Login / > }
-                /> <
-                Route path = "/register"
-                element = { < Register / > }
-                /> <
-                Route path = "/forgot-password"
-                element = { < ForgotPassword / > }
+        return ( <Routes >
+                <Route path = "/"
+                element = { <Home /> }
+                /> <Route path = "/login"
+                element = { <Login /> }
+                /> <Route path = "/register"
+                element = { <Register /> }
+                /> <Route path = "/forgot-password"
+                element = { <ForgotPassword /> }
                 />
 
-                { /* Admin Routes */ } <
-                Route path = "/admin-dashboard"
-                element = { < AdminDashboard / > }
-                /> <
-                Route path = "/admin/announcements"
-                element = { < TutorAnnouncements / > }
+                { /* Admin Routes */ } <Route path = "/admin-dashboard"
+                element = { <AdminDashboard /> }
+                /> <Route path = "/admin/announcements"
+                element = { <TutorAnnouncements /> }
                 />
 
-                { /* Tutor Routes */ } <
-                Route path = "/tutor-dashboard"
-                element = { < TutorDashboard / > }
-                /> <
-                Route path = "/tutor/courses"
-                element = { < TutorDashboard initialView = "courses" / > }
-                /> <
-                Route path = "/tutor/create-course"
-                element = { < TutorDashboard initialView = "create-course" / > }
-                /> <
-                Route path = "/tutor/courses/:courseId"
-                element = { < TutorCourseDetail / > }
-                /> <
-                Route path = "/tutor/messages"
-                element = { < TutorDashboard initialView = "messages" / > }
-                /> <
-                Route path = "/tutor/announcements"
-                element = { < TutorDashboard initialView = "announcements" / > }
-                /> <
-                Route path = "/tutor/create-lesson"
-                element = { < TutorLessonCreate / > }
-                /> <
-                Route path = "/tutor/upload-resource"
-                element = { < TutorResourceUpload / > }
-                /> <
-                Route path = "/tutor/schedule"
-                element = { < TutorDashboard initialView = "schedule" / > }
+                { /* Tutor Routes */ } <Route path = "/tutor-dashboard"
+                element = { <TutorDashboard /> }
+                /> <Route path = "/tutor/courses"
+                element = { <TutorDashboard initialView = "courses" /> }
+                /> <Route path = "/tutor/create-course"
+                element = { <TutorDashboard initialView = "create-course" /> }
+                /> <Route path = "/tutor/courses/:courseId"
+                element = { <TutorCourseDetail /> }
+                /> <Route path = "/tutor/messages"
+                element = { <TutorDashboard initialView = "messages" /> }
+                /> <Route path = "/tutor/announcements"
+                element = { <TutorDashboard initialView = "announcements" /> }
+                /> <Route path = "/tutor/create-lesson"
+                element = { <TutorLessonCreate /> }
+                /> <Route path = "/tutor/upload-resource"
+                element = { <TutorResourceUpload /> }
+                /> <Route path = "/tutor/schedule"
+                element = { <TutorDashboard initialView = "schedule" /> }
                 />
 
 
-                { /* Student Routes */ } <
-                Route path = "/student-dashboard"
-                element = { < StudentDashboard / > }
-                /> <
-                Route path = "/student/courses/:courseId"
-                element = { < StudentCourseDetail / > }
-                /> <
-                Route path = "/courses"
-                element = { < StudentCourses onBack = {
+                { /* Student Routes */ } <Route path = "/student-dashboard"
+                element = { <StudentDashboard /> }
+                /> <Route path = "/student/courses/:courseId"
+                element = { <StudentCourseDetail /> }
+                /> <Route path = "/courses"
+                element = { <StudentCourses onBack = {
                         () => navigate(-1) }
-                    />} / >
-                    <
-                    Route path = "/browse-courses"
-                    element = { < BrowseCourses onBack = {
+                    />} />
+                    <Route path = "/browse-courses"
+                    element = { <BrowseCourses onBack = {
                             () => navigate(-1) }
-                        />} / >
-                        <
-                        Route path = "/discussions"
-                        element = { < DiscussionForum onBack = {
+                        />} />
+                        <Route path = "/discussions"
+                        element = { <DiscussionForum onBack = {
                                 () => navigate(-1) }
-                            />} / >
-                            <
-                            Route path = "/schedule"
-                            element = { < StudentSchedule onBack = {
+                            />} />
+                            <Route path = "/schedule"
+                            element = { <StudentSchedule onBack = {
                                     () => navigate(-1) }
-                                />} / >
-                                <
-                                Route path = "/announcements"
-                                element = { < StudentAnnouncements / > }
+                                />} />
+                                <Route path = "/announcements"
+                                element = { <StudentAnnouncements /> }
                                 />
 
-                                <
-                                /Routes>
+                                </Routes>
                             );
                         };
 
                         function App() {
-                            return ( <
-                                Router >
-                                <
-                                AppRoutes / >
-                                <
-                                /Router>
+                            return ( <Router >
+                                <AppRoutes />
+                                </Router>
                             );
                         }
 

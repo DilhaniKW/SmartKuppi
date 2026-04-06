@@ -13,6 +13,14 @@ const DiscussionForum = ({ onBack }) => {
   const [submitting, setSubmitting] = useState(false);
   const [selectedDiscussion, setSelectedDiscussion] = useState(null);
   const [comment, setComment] = useState('');
+  const [error, setError] = useState('');
+
+  const trimmedTitle = newDiscussion.title.trim();
+  const trimmedContent = newDiscussion.content.trim();
+  const isTitleOnlySpaces = newDiscussion.title.length > 0 && trimmedTitle.length === 0;
+  const isContentOnlySpaces = newDiscussion.content.length > 0 && trimmedContent.length === 0;
+  const isTitleTooShort = trimmedTitle.length > 0 && trimmedTitle.length <= 3;
+  const isSubmitDisabled = submitting || !trimmedTitle || !trimmedContent || isTitleTooShort;
 
   useEffect(() => {
     fetchDiscussions();
@@ -38,13 +46,24 @@ const DiscussionForum = ({ onBack }) => {
 
   const handleCreateDiscussion = async (e) => {
     e.preventDefault();
-    if (!newDiscussion.title.trim() || !newDiscussion.content.trim()) return;
+    setError('');
+
+    if (!trimmedTitle || !trimmedContent) {
+      setError('Title and content cannot be empty or only spaces');
+      return;
+    }
+
+    if (isTitleTooShort) {
+      setError('Discussion title must be greater than 3 letters');
+      return;
+    }
+
     setSubmitting(true);
     setTimeout(() => {
       setDiscussions([{
         id: Date.now(),
-        title: newDiscussion.title,
-        content: newDiscussion.content,
+        title: trimmedTitle,
+        content: trimmedContent,
         author: 'You',
         date: new Date().toISOString().split('T')[0],
         replies: 0,
@@ -67,13 +86,22 @@ const DiscussionForum = ({ onBack }) => {
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
         <h2 className="text-lg font-bold text-slate-900 mb-4">Start a Discussion</h2>
         <form onSubmit={handleCreateDiscussion} className="space-y-4">
+          {error && <p className="text-sm text-rose-600 font-medium">{error}</p>}
           <input
             type="text"
             placeholder="Discussion title"
             value={newDiscussion.title}
             onChange={(e) => setNewDiscussion({ ...newDiscussion, title: e.target.value })}
-            className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent focus:border-indigo-500 rounded-xl focus:outline-none transition-all"
+            className={`w-full px-4 py-3 bg-slate-50 border-2 focus:outline-none rounded-xl transition-all ${
+              isTitleTooShort ? 'border-rose-400' : 'border-transparent focus:border-indigo-500'
+            }`}
           />
+          {isTitleOnlySpaces && (
+            <p className="text-sm text-rose-600 font-medium">Title cannot be only spaces.</p>
+          )}
+          {isTitleTooShort && (
+            <p className="text-sm text-rose-600 font-medium">Title must be greater than 3 letters.</p>
+          )}
           <textarea
             rows={4}
             placeholder="What would you like to discuss?"
@@ -81,9 +109,12 @@ const DiscussionForum = ({ onBack }) => {
             onChange={(e) => setNewDiscussion({ ...newDiscussion, content: e.target.value })}
             className="w-full px-4 py-3 bg-slate-50 border-2 border-transparent focus:border-indigo-500 rounded-xl focus:outline-none transition-all resize-none"
           />
+          {isContentOnlySpaces && (
+            <p className="text-sm text-rose-600 font-medium">Content cannot be only spaces.</p>
+          )}
           <button
             type="submit"
-            disabled={submitting}
+            disabled={isSubmitDisabled}
             className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all disabled:opacity-70"
           >
             {submitting ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Send className="h-5 w-5" />}

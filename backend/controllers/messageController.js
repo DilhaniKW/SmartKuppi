@@ -7,7 +7,7 @@ const { createNotification } = require('./notificationController');
 // @desc    Send a message (student to tutor or tutor to student)
 // @route   POST /api/messages
 // @access  Private (any logged-in user)
-exports.sendMessage = async(req, res) => {
+exports.sendMessage = async (req, res) => {
     try {
         const { receiver, course, content } = req.body;
         const sender = req.user.id;
@@ -43,20 +43,25 @@ exports.sendMessage = async(req, res) => {
 
         // FIX: Populate before sending response so frontend doesn't get "ID only"
         const populatedMessage = await Message.findById(newMessage._id)
-            .populate('sender', 'name email')
-            .populate('receiver', 'name email')
+            .populate('sender', 'name email role')
+            .populate('receiver', 'name email role')
             .populate('course', 'title');
 
         try {
-            const courseTitle = populatedMessage ? .course ? .title || 'a course';
-            const senderName = populatedMessage ? .sender ? .name || 'Someone';
+            const courseTitle = populatedMessage?.course ?.title || 'a course';
+            const senderName = populatedMessage ?.sender ?.name || 'Someone';
+            const recipientRole = populatedMessage ?.receiver ?.role;
+            const messageLink = recipientRole === 'tutor' ?
+                '/tutor/messages' :
+                `/student/courses/${course}?tab=message`;
+
             await createNotification({
                 recipient: receiver,
                 sender,
                 type: 'message',
                 title: 'New Message',
                 message: `${senderName} sent you a message in ${courseTitle}`,
-                link: '/tutor/messages',
+                link: messageLink,
                 metadata: {
                     course,
                     messageId: newMessage._id
@@ -76,7 +81,7 @@ exports.sendMessage = async(req, res) => {
 // @desc    Get messages for the logged-in user (inbox)
 // @route   GET /api/messages/inbox
 // @access  Private
-exports.getInbox = async(req, res) => {
+exports.getInbox = async (req, res) => {
     try {
         const messages = await Message.find({ receiver: req.user.id })
             .populate('sender', 'name email')
@@ -92,7 +97,7 @@ exports.getInbox = async(req, res) => {
 // @desc    Get sent messages
 // @route   GET /api/messages/sent
 // @access  Private
-exports.getSent = async(req, res) => {
+exports.getSent = async (req, res) => {
     try {
         const messages = await Message.find({ sender: req.user.id })
             .populate('sender', 'name email')
@@ -108,7 +113,7 @@ exports.getSent = async(req, res) => {
 // @desc    Mark a message as read
 // @route   PUT /api/messages/:id/read
 // @access  Private (receiver only)
-exports.markRead = async(req, res) => {
+exports.markRead = async (req, res) => {
     try {
         const message = await Message.findById(req.params.id);
         if (!message) return res.status(404).json({ success: false, message: 'Message not found' });
@@ -126,7 +131,7 @@ exports.markRead = async(req, res) => {
 // @desc    Get conversation between two users for a specific course
 // @route   GET /api/messages?course=:courseId&user=:userId
 // @access  Private
-exports.getConversation = async(req, res) => {
+exports.getConversation = async (req, res) => {
     try {
         const { course, user } = req.query;
         const currentUser = req.user.id;
@@ -136,12 +141,12 @@ exports.getConversation = async(req, res) => {
         }
 
         const messages = await Message.find({
-                course: course,
-                $or: [
-                    { sender: currentUser, receiver: user },
-                    { sender: user, receiver: currentUser }
-                ]
-            }).sort('createdAt')
+            course: course,
+            $or: [
+                { sender: currentUser, receiver: user },
+                { sender: user, receiver: currentUser }
+            ]
+        }).sort('createdAt')
             .populate('sender', 'name email')
             .populate('receiver', 'name email');
 
@@ -149,5 +154,34 @@ exports.getConversation = async(req, res) => {
     } catch (error) {
         console.error('Error fetching conversation:', error);
         res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @desc    Mark all unread messages in a thread as read
+// @route   PUT /api/messages/read-thread
+// @access  Private (current receiver only)
+exports.markThreadRead = async (req, res) => {
+    try {
+        const { course, user } = req.body;
+
+        if (!course || !user) {
+            return res.status(400).json({ success: false, message: 'Course and user are required' });
+        }
+
+        const result = await Message.updateMany({
+            course,
+            sender: user,
+            receiver: req.user.id,
+            read: false
+        }, {
+            $set: { read: true }
+        });
+
+        return res.json({
+            success: true,
+            data: { modifiedCount: result.modifiedCount || 0 }
+        });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
     }
 };

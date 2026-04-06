@@ -4,7 +4,7 @@ import { Send, User, BookOpen } from 'lucide-react';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
-const MessageThread = ({ conversation, onMessageSent }) => {
+const MessageThread = ({ conversation, onMessageSent, onThreadRead }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -24,6 +24,34 @@ const MessageThread = ({ conversation, onMessageSent }) => {
       const data = await res.json();
       if (data.success) {
         setMessages(data.data);
+
+        const unreadIncoming = data.data.filter(
+          (msg) => !msg.read && (msg.receiver?._id === currentUser.id || msg.receiver === currentUser.id)
+        );
+
+        if (unreadIncoming.length > 0) {
+          await fetch(`${API_BASE_URL}/messages/read-thread`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              course: courseId,
+              user: userId
+            })
+          });
+
+          setMessages((prev) =>
+            prev.map((msg) => {
+              const isMine = msg.receiver?._id === currentUser.id || msg.receiver === currentUser.id;
+              return isMine ? { ...msg, read: true } : msg;
+            })
+          );
+
+          onThreadRead?.();
+        }
+
         scrollToBottom();
       }
     } catch (err) {

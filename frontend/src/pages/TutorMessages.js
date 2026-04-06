@@ -5,7 +5,7 @@ import MessageThread from '../components/MessageThread';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
-const TutorMessages = ({ onBack }) => {
+const TutorMessages = ({ onBack, onUnreadCountChange }) => {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedConversation, setSelectedConversation] = useState(null);
@@ -61,6 +61,9 @@ const TutorMessages = ({ onBack }) => {
         messages: conv.messages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)),
         lastMessage: conv.messages.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[conv.messages.length - 1]
       })).sort((a, b) => new Date(b.lastMessage.createdAt) - new Date(a.lastMessage.createdAt));
+
+      const unreadTotal = convList.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
+      onUnreadCountChange?.(unreadTotal);
       
       setConversations(convList);
 
@@ -115,23 +118,35 @@ const TutorMessages = ({ onBack }) => {
               <div className="p-10 text-center text-slate-400">No messages found.</div>
             ) : (
               conversations.map((conv) => (
+                (() => {
+                  const hasUnread = (conv.unreadCount || 0) > 0;
+                  return (
                 <button
                   key={conv.id}
                   onClick={() => handleSelect(conv)}
-                  className={`w-full p-4 text-left hover:bg-slate-50 transition-all ${selectedConversation?.id === conv.id ? 'bg-indigo-50 border-r-4 border-indigo-600' : ''}`}
+                  className={`w-full p-4 text-left hover:bg-slate-50 transition-all ${selectedConversation?.id === conv.id ? 'bg-indigo-50 border-r-4 border-indigo-600' : hasUnread ? 'bg-indigo-50/40' : ''}`}
                 >
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0"><User className="text-slate-500" size={20}/></div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-center">
-                        <p className="font-bold text-slate-900 truncate">{conv.otherUser.name}</p>
-                        <span className="text-[10px] text-slate-400">{formatDate(conv.lastMessage.createdAt)}</span>
+                        <p className={`truncate ${hasUnread ? 'font-extrabold text-slate-900' : 'font-bold text-slate-900'}`}>{conv.otherUser.name}</p>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[10px] ${hasUnread ? 'font-bold text-indigo-600' : 'text-slate-400'}`}>{formatDate(conv.lastMessage.createdAt)}</span>
+                          {hasUnread && (
+                            <span className="min-w-5 h-5 px-1 bg-indigo-600 text-white rounded-full text-[10px] font-bold flex items-center justify-center">
+                              {conv.unreadCount > 9 ? '9+' : conv.unreadCount}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-xs text-indigo-600 truncate flex items-center gap-1"><BookOpen size={12}/> {conv.course?.title}</p>
-                      <p className="text-sm text-slate-500 truncate mt-1">{conv.lastMessage.content}</p>
+                      <p className={`text-xs truncate flex items-center gap-1 ${hasUnread ? 'text-indigo-700 font-semibold' : 'text-indigo-600'}`}><BookOpen size={12}/> {conv.course?.title}</p>
+                      <p className={`text-sm truncate mt-1 ${hasUnread ? 'font-semibold text-slate-800' : 'text-slate-500'}`}>{conv.lastMessage.content}</p>
                     </div>
                   </div>
                 </button>
+                );
+                })()
               ))
             )}
           </div>
@@ -143,6 +158,7 @@ const TutorMessages = ({ onBack }) => {
             <MessageThread 
               conversation={selectedConversation} 
               onMessageSent={() => fetchMessages(true)} // Background refresh (no spinner)
+              onThreadRead={() => fetchMessages(true)}
             />
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-slate-300">
